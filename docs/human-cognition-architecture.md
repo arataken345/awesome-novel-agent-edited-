@@ -295,3 +295,86 @@ Does the filter change what the narration is allowed to know? Stylistic
 decoration is cheap to imitate and easy to game; behavioral difference —
 what is noticed, what is hedged, what is left unsaid — is where the
 machinery either works or doesn't.
+
+## 27. Why Writer Behavioral Validation exists (and what it does not prove)
+
+Filter-level tests prove the cognition layer *produces* different
+artifacts per POV. That is necessary but insufficient: a filter that
+differs beautifully on disk proves nothing if those differences never
+survive the prompt-crafter and the Writer into narrative realization.
+The Writer Behavioral Validation layer (`tools/test_writer_behavioral.py`)
+closes the remaining gap in the chain:
+
+    cognitive state -> POV filter -> prompt crafter -> Writer -> realization
+
+**What it proves.** That cognitively different POV conditions — same
+story, same scene, same Writer path, only the cognitive state changed —
+produce meaningfully different narrative realization (attention order,
+interpretation, emotional framing, familiarity compression, social
+reading) while preserving story truth, closed-POV epistemic boundaries,
+and the global prose rules. The proof is structural: a fixed,
+POV-agnostic deterministic adapter renders each POV's realization from
+*only* the prompt document, so any cross-POV difference demonstrably
+originates in the prompt (hence in cognition), never in the renderer.
+
+**Deterministic vs model-backed.** Level A runs always, with no API key,
+no network, no model: it verifies cognitive state -> filter -> prompt
+and that Writer *input* differs correctly. Level B (`--model`) is opt-in
+and reports an honest SKIP — this repository defines the Writer as a
+markdown agent role executed by an external harness and exposes no
+model interface, so there is nothing to invoke. A skipped Level B is
+not a failure, and no prose is ever fabricated to pretend otherwise.
+
+**Behavioral dimensions.** Eight are checked semantically: attention
+differentiation (output reflects WHAT_TO_NOTICE / WHAT_TO_IGNORE),
+interpretation differentiation (beliefs preserved as POV beliefs; the
+benchmark detects collapse into a single authorial truth), emotional
+framing (behavioral consequence, never a required emotion word),
+association differentiation (may shape comparison; absence is valid),
+familiarity compression (familiar -> compressed, unfamiliar -> noted,
+situation-dependent), social cognition (same dialogue, different
+reading; dialogue never rewritten to manufacture difference),
+self-blindness (the true state vs the character's awareness, protected),
+and epistemic preservation (narrative distance never grants epistemic
+permission).
+
+**Semantic comparison philosophy.** No Levenshtein, no token overlap, no
+cosine similarity as a behavioral metric: two good POV realizations may
+share many words, two bad ones may differ dramatically. Checks compare
+field-level semantic content — which beliefs are tagged to which POV,
+which items are omitted, which unknowns stay unknown. Same observation
+is not failure (two POVs may both notice the door); different wording
+is not success. Negative controls (a deliberately smuggled secret, a
+forged asserted unknown) prove the detectors are not vacuous.
+
+**Why no humanity score exists.** A number like "humanity: 87%" would
+turn the benchmark into an optimization target, and optimizing for
+looking human produces exactly the defect-sprinkling §25 prohibits.
+The benchmark reports PASS / FAIL / ADVISORY with concrete evidence per
+dimension. ADVISORY is never a failure: it marks a cognitively optional
+behavior the scene did not require.
+
+**Why unsupported imperfections are rejected.** A typo, fragment, or
+memory error with no cognitive cause is not humanity — it is noise the
+model added. The benchmark structurally asserts that every realization
+string derives from the prompt document (or is a fixed structural
+label): the adapter invents nothing, so any unsupported defect would
+have to come from the architecture, where it would be caught.
+
+**Limitations of model-backed testing.** Even with a real model, the
+benchmark could not prove prose is human-written — only that
+cognitively different conditions change realization without violating
+constraints. Model outputs also vary across runs, providers, and
+temperatures, so Level B must use semantic acceptance criteria, never
+exact-sentence assertions, and must always report model, provider,
+runtime, and seed.
+
+The mandatory distinction, stated plainly:
+
+«The benchmark does not prove that generated prose is human-written.»
+
+It proves only that:
+
+«cognitively different POV conditions can survive the architecture into
+narrative realization without violating epistemic and structural
+constraints.»
