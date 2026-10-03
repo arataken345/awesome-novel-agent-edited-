@@ -48,7 +48,8 @@ knowledge:
   - `archives/vol-{N}-ch-{M}-{slug}.draft.md` → writer 原始输出
   - `prompts/vol-{N}-ch-{M}-prompt.md` → 渲染后提示词（同源验收，读同章与生成一致的提示词逐条对照）
   - `.claude/knowledge/anti-ai.md` → 反 AI 规则合并文件（活人感正向方法 + 分级禁用表 + 方法论 + 误杀防护 + 题材正反例）
-  - `.claude/tools/check-prose.py` → 正文机器初筛脚本（Phase 2 初筛 + Phase 4 复跑，输出「需要修改/需要人工判断」两档；缺失时降级模型肉眼，非阻塞）
+  - `.claude/tools/check-prose.py` → 中文正文机器初筛脚本（Phase 2 初筛 + Phase 4 复跑，输出「需要修改/需要人工判断」两档；缺失时降级模型肉眼，非阻塞）
+  - `.claude/tools/check-prose-en.py` → English manuscript machine pre-screen (Phase 2 + Phase 4 re-run): enforces deterministic global rules (colon/semicolon bans, dialogue paragraph architecture) plus AI-tell warnings; exit 0/1/2 like check-prose.py. Language selection: run check-prose-en.py when the manuscript is English (order-specified, or CJK character ratio < 5%), otherwise check-prose.py. Missing → degrade gracefully to model eyeball, non-blocking.
 - **Output Artifacts:**
   - `archives/vol-{N}-ch-{M}-{slug}.anti-ai.md` → 去 AI 味后的正文（含验收违反报告节：逐条 条号/原文要求/正文表现/违反与否/建议 + 结论 PASS/FAIL）
 - **Hand-off Protocol:** 写入 `.anti-ai.md` 后，用 Write 覆盖 order 的 `status: pending` 为 `status: DONE`（不删除文件）→ reader 阶段启动
@@ -72,7 +73,7 @@ knowledge:
   THINK:
     按 skills/anti-ai.md 全流程执行：
     Phase 1 扫描 → 标记 Gate A-F 位置
-    Phase 2 诊断 → 机器初筛（check-prose.py，可降级）+ 6 项量化指标打分，定级
+    Phase 2 诊断 → 机器初筛（check-prose.py 中文 / check-prose-en.py 英文，按语言选择，可降级）+ 6 项量化指标打分，定级
     Phase 3 逐项清除 → 按定级范围修改，收敛规则
     Phase 4 报告 → 输出修改统计
 

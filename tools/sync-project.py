@@ -161,7 +161,7 @@ def compute_fingerprint() -> str:
             if f.is_file() and f.name != ".gitkeep" and "migration" not in f.parts and "settings" not in f.parts:
                 files.append(f)
     # 正文检查脚本（sync_tools 部署范围；不进指纹则升级后存量项目拿不到脚本）
-    for name in ("check-prose.py", "check-chapter.py"):
+    for name in ("check-prose.py", "check-chapter.py", "check-prose-en.py"):
         tool = SKILL_HOME / "tools" / name
         if tool.is_file():
             files.append(tool)
