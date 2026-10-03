@@ -5,7 +5,9 @@
 （MIT License, Copyright (c) 2026 Human Writing Skill contributors），
 按 knowledge/global-rules/default-rules.md 全局硬规则执行（确定性实现见
 tools/prose_global_rules.py，与 check-prose-en.py 共用同一份）：
-- 正文冒号/分号（含全角：；）为硬失败；直接引出对话引语的冒号（如他说：“…”）除外；
+- 正文冒号/分号（含全角：；）为硬失败，无例外（ canonical 规则
+  templates/settings/global-rules.md `no-colon-in-prose` 为无条件禁令，
+  对话引语冒号亦判失败，写手须改写）；
 - 破折号不做硬禁，段落内 ≥3 处时提示逐处按用法判定（common-rules.md 破折号判定）；
 - 段落按行切分（网文章节每段一行，空行仅作分隔）。
 

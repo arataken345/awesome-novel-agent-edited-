@@ -59,9 +59,10 @@ def test_semantic_pivot_warning_only():
     check("输出含疑似翻案腔变形", "疑似翻案腔变形" in out, out[:200])
 
 
-def test_dash_colon_not_hard_fail():
-    code, _ = run_check("他顿了顿——没接话。他说：“走吧。”门关上了。")
-    check("单处破折号/引语冒号不判失败（网文口径）", code == 0, code)
+def test_dash_warning_colon_hard_fail():
+    # 破折号仍仅警告（不判失败），但引语冒号按无条件禁令判硬失败。
+    code, out = run_check("他顿了顿——没接话。他说：“走吧。”门关上了。")
+    check("引语冒号判硬失败（退出码 1）", code == 1 and "冒号" in out, (code, out[:200]))
 
 
 def test_dash_dense_warning():
@@ -103,7 +104,7 @@ def test_read_error():
 if __name__ == "__main__":
     test_pivot_hard_fail()
     test_semantic_pivot_warning_only()
-    test_dash_colon_not_hard_fail()
+    test_dash_warning_colon_hard_fail()
     test_dash_dense_warning()
     test_road_sign_fail()
     test_uniform_sentence_cv_warning()
