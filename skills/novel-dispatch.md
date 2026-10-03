@@ -23,6 +23,8 @@ novel-agent **只做三件事**：
 | 任意 phase | style-distiller | `style-distill-order.md`（作者说"修改文风设定/更新文风/重新蒸馏/按这个风格写"→ 文风设定决策流程；存量项目可用已归档正文做样本） |
 | outline | volume-planner | `volume-plan-order.md` |
 | outline | chapter-planner | `chapter-plan-order.md` |
+| draft | cognition-agent | `cognition-order.md` |
+| draft | narrator-voice-agent | `narrator-voice-order.md` |
 | draft | prompt-crafter | `prompt-craft-order.md` |
 | draft | writer | `writing-order.md` |
 | anti-ai | anti-ai | `anti-ai-order.md` |
@@ -42,7 +44,7 @@ novel-agent **只做三件事**：
 |------|---------|-----------|
 | 设定（`setting-update-order.md` DONE） | 展示设定摘要（文件清单 + 世界观/题材/角色/文风要点） | phase→outline, step→volume-planning |
 | 卷纲（`volume-plan-order.md` DONE） | 展示卷纲摘要（四幕结构/情绪走向/章数，日常语言） | step→chapter-planning |
-| 章纲（`chapter-plan-order.md` DONE） | 展示章纲摘要（本章核心剧情/情绪节奏/钩子，日常语言） | phase→draft, step→prompt-crafting |
+| 章纲（`chapter-plan-order.md` DONE） | 展示章纲摘要（本章核心剧情/情绪节奏/钩子，日常语言） | phase→draft, step→cognition-modeling |
 
 确认语义：
 
@@ -102,6 +104,8 @@ outputs:
 | setup | `setting-update-order` DONE 且 outputs 非空 | 不推进 phase——展示设定摘要等作者确认 |
 | volume-planning | `章节状态 > volume-planning`；等值且 `volume-plan-order` DONE | `>` 成立 → 跳过；等值 DONE → 卷纲已写完待作者确认——重新展示卷纲摘要等确认，不重派 |
 | chapter-planning | `章节状态 > chapter-planning`；等值且 `chapter-plan-order` DONE | `>` 成立 → 跳过；等值 DONE → 章纲已写完待作者确认——重新展示章纲摘要等确认，不重派 |
+| cognition-modeling | `章节状态 > cognition-modeling`（`cognition-order` DONE 且 `.agent/cognition/vol-{N}-ch-{M}.md` 产出） | 成立 → 跳过；否则派 cognition-order（缺失则停下，等产出） |
+| narrator-voice-filtering | `章节状态 > narrator-voice-filtering`（`narrator-voice-order` DONE 且每场景 filter 产出） | 成立 → 跳过；否则派 narrator-voice-order（缺失则停下，等产出） |
 | prompt-crafting | `章节状态 > prompt-crafting` | 成立 → 跳过 |
 | writing | `章节状态 > writing` | 成立 → 跳过 |
 | anti-ai | `章节状态 > anti-ai` | 成立 → 跳过 |
