@@ -568,7 +568,9 @@ def deploy_knowledge(project_path: Path, genre: str, platform: Platform, length=
         count += 1
 
     # 创作方法论目录（plot-craft / scene-craft / character-craft / title-craft）
-    craft_dirs = ["plot-craft", "scene-craft", "character-craft", "title-craft"]
+    # + 认知人性化 / 叙事者声音 / 全局写作规则（cognition / narrator-voice / global-rules）
+    craft_dirs = ["plot-craft", "scene-craft", "character-craft", "title-craft",
+                  "cognition", "narrator-voice", "global-rules"]
     for dir_name in craft_dirs:
         src = SOURCE_KNOWLEDGE / dir_name
         if src.exists() and src.is_dir():
