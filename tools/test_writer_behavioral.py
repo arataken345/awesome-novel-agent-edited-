@@ -4,24 +4,33 @@
 Proves that cognitively different POV states produce meaningfully
 different narrative realization through the REAL repository seam:
 
-    cognitive state -> POV_FILTER.build_filter() -> assemble_writer_prompt()
-    -> writer_adapter() -> realization sketch -> behavioral checks
+    cognitive state -> POV_FILTER.build_filter() -> build_writer_prompt()
+    -> deterministic_writer_fixture() -> realization sketch
+    -> behavioral checks
 
 WHAT THIS IS:
 - Level A (default): fully deterministic. No API key, no network, no
   model, no GPU. Verifies cognitive state -> filter -> prompt, and that
   Writer *input* differs correctly per POV.
-- The `writer_adapter` is a FIXED, POV-AGNOSTIC deterministic function:
-  the same code path renders every POV's realization from ONLY the
-  prompt document. Any cross-POV difference in the realization therefore
-  originates in the prompt (hence in cognition), never in the adapter.
-  It is a test seam, NOT a prose generator and NOT an LLM. It produces a
-  structured realization sketch (attention order, interpretations,
-  framing markers), never novel prose.
-- Level B (`--model`): opt-in model-backed benchmark. This repository
-  defines the Writer as a markdown agent role executed by an external
-  harness; there is no model interface to invoke. Level B therefore
-  reports an honest SKIP, never fabricated prose.
+- The `deterministic_writer_fixture` is a FIXED, POV-AGNOSTIC
+  deterministic structural fixture: the same code path renders every
+  POV's realization from ONLY the prompt document. Any cross-POV
+  difference in the realization therefore originates in the prompt
+  (hence in cognition), never in the fixture. It is a test seam, NOT a
+  Writer, NOT an LLM, NOT a prose generator and NOT a model of writing
+  quality. It produces a structured realization sketch (attention
+  order, interpretations, framing markers), never novel prose. Never
+  present it as real Writer behavior.
+- Level B (`--model [NAME]`): opt-in live benchmark. A backend is
+  resolved via tools/writer_runner.py from the NOVEL_WRITER_RUNNER env
+  var ("module:factory_path"; factory signature create(model) ->
+  WriterRunner). With no backend configured, Level B prints
+  `LEVEL B SKIPPED — live model unavailable` and exits 0: a skip is
+  never reported as a pass. Live prose is evaluated with deterministic
+  consequence probes only (attention distribution, epistemic leakage,
+  memory fidelity, global prose rules); checks requiring genuine
+  judgment are ADVISORY with the raw prose attached for human review.
+  No humanity score, no ranking.
 
 WHAT THIS PROVES (and does not prove):
 - Proves: cognitively different POV conditions survive the architecture
@@ -37,7 +46,7 @@ Design rules honored:
 - Association absence is valid (ADVISORY, never FAIL for absence).
 - ADVISORY never becomes FAIL merely because an optional behavior was
   not expressed.
-- No random humanization: the adapter invents nothing; every realization
+- No random humanization: the fixture invents nothing; every realization
   string is drawn from the prompt document (structurally asserted).
 
 CANON DISCLAIMER: the scene and the three POV configurations are
@@ -48,7 +57,9 @@ as characterization.
 
 Usage:
     python3 tools/test_writer_behavioral.py            # Level A
-    python3 tools/test_writer_behavioral.py --model    # Level B (SKIP)
+    python3 tools/test_writer_behavioral.py --model    # Level B (SKIP unless
+                                                       # NOVEL_WRITER_RUNNER set)
+    python3 tools/test_writer_behavioral.py --model NAME  # Level B, named model
 Exit code: 0 iff no FAIL (ADVISORY is allowed).
 """
 
@@ -71,6 +82,31 @@ POV_FILTER = load_module("pov_filter_writer_mod", TOOLS_DIR / "pov_filter.py")
 GR = load_module("prose_global_rules_writer_mod", TOOLS_DIR / "prose_global_rules.py")
 CHECK_EN = load_module("check_prose_en_writer_mod", TOOLS_DIR / "check-prose-en.py")
 
+# Production seam + synthetic fixtures. Plain imports (not load_module):
+# sys.modules dedupes by module name, so the function/object identity
+# assertions in test_seam_integrity.py hold regardless of load order.
+# _canon / _field_has_load are the seam's own serialization/selection
+# semantics -- the test must not maintain its own copy (Problem 2).
+from build_writer_prompt import (  # noqa: E402
+    SPARSE_CEILING,
+    SPARSE_PRIORITY,
+    _canon,
+    _field_has_load,
+    build_writer_prompt,
+)
+from cognition_test_fixtures import (  # noqa: E402
+    FUTURE_DECOY,
+    HIDDEN_LIE,
+    HIDDEN_TRUTH,
+    MEMORY_VARIANTS,
+    POVS,
+    REGISTRY_DECOY,
+    SCENE_CANON,
+    make_profile,
+    make_state,
+)
+from writer_runner import LiveModelUnavailable, resolve_live_runner  # noqa: E402
+
 # ---------------------------------------------------------------- statuses
 
 PASS = "PASS"
@@ -83,230 +119,6 @@ ADVISORY = "ADVISORY"
 def _norm(text: str) -> str:
     """Lowercase alphanumeric-plus-space normalization for leak checks."""
     return re.sub(r"[^a-z0-9 ]", " ", str(text).lower())
-
-
-def _canon(value) -> str:
-    if isinstance(value, dict):
-        return json.dumps(value, sort_keys=True, ensure_ascii=False)
-    if isinstance(value, (list, tuple)):
-        return json.dumps(list(value), ensure_ascii=False)
-    return str(value)
-
-
-# ------------------------------------------------- synthetic scene (constant)
-
-# (key, text). The keys are stable handles; the text is what the Writer sees.
-SCENE_CANON = [
-    ("newcomer", "Rook enters the strategy room."),
-    ("sable", "Sable stands beside the large table."),
-    ("display", "The transparent display is active, cycling telemetry."),
-    ("key", "A small brass key rests on the table."),
-    ("utterance", '"The schedule moved," Sable says.'),
-    ("sound", "A ventilation duct clanks somewhere above."),
-    ("gesture", "Sable taps two fingers against the table edge."),
-    ("architecture", "The vaulted ceiling arches overhead, lined with old acoustic panels."),
-    ("envelope", "A sealed envelope leans against the display stand."),
-]
-
-# Story truth. Lives ONLY in the state's `canon_truth` key, which
-# build_filter never reads. Must never reach prompt or realization.
-HIDDEN_TRUTH = "the brass key opens the archive vault"
-HIDDEN_LIE = "Sable is lying about the schedule"
-
-# Decoys for quarantine checks: registry-style and future-payoff entries
-# that must never appear in a Writer prompt.
-REGISTRY_DECOY = "REGISTRY-DECOY: unresolved entry #12 (the envelope)"
-FUTURE_DECOY = "FUTURE-DECOY: the key's purpose pays off in chapter nine"
-
-
-def _profile(**overrides) -> dict:
-    profile = {
-        "sensory_priorities": ["sight"],
-        "emotional_vocabulary": ["neutral"],
-        "narrative_distance": "close",
-        "certainty_tolerance": "low",
-    }
-    profile.update(overrides)
-    return profile
-
-
-def _state(**overrides) -> dict:
-    state = {
-        "attention": {"PRIMARY": [], "SECONDARY": [], "IGNORED": []},
-        "familiarity": [],
-        "interpretations": [],
-        "misinterpretations": [],
-        "unknown_facts": [],
-        "blind_spots": [],
-        "associations": [],
-        "emotional_state": "neutral",
-        "emotional_awareness": "recognize",
-        "social_assumptions": [],
-        "current_distractions": [],
-        "cognitive_noise": [],
-        "salience_map": [],
-        "canon_truth": [HIDDEN_TRUTH, HIDDEN_LIE],
-    }
-    state.update(overrides)
-    return state
-
-
-# Three synthetic POV configurations. Same scene, same canon, same
-# Writer path -- only the cognitive state changes.
-POVS = {
-    "A": {
-        "profile": _profile(
-            sensory_priorities=["hearing", "sight"],
-            emotional_vocabulary=["curious", "detached"],
-            association_patterns=["unfinished notes"],
-            social_perception="reads people as strategic communicators",
-        ),
-        "state": _state(
-            attention={
-                "PRIMARY": ["Sable's wording", "the pauses between words"],
-                "SECONDARY": ["the brass key"],
-                "IGNORED": ["the vaulted ceiling", "the acoustic panels"],
-            },
-            interpretations=["Sable is hiding disagreement"],
-            unknown_facts=["what the sealed envelope contains"],
-            emotional_state="detached curiosity",
-            emotional_awareness="recognize",
-            associations=["unfinished notes"],
-            social_assumptions=["people communicate strategically"],
-            familiarity=["the strategy room", "the vaulted ceiling"],
-            current_distractions=["the duct clank"],
-        ),
-    },
-    "B": {
-        "profile": _profile(
-            sensory_priorities=["sight"],
-            emotional_vocabulary=["tense", "alert"],
-            narrative_distance="close",
-            association_patterns=["cold machinery"],
-            social_perception="reads people as potential threats",
-        ),
-        "state": _state(
-            attention={
-                "PRIMARY": ["the transparent display", "Sable's hands", "the exits"],
-                "SECONDARY": ["Sable's posture"],
-                "IGNORED": ["Sable's wording"],
-            },
-            interpretations=["the display indicates immediate danger"],
-            unknown_facts=["why Sable keeps glancing at the door"],
-            emotional_state="alert tension",
-            emotional_awareness="recognize",
-            associations=["cold machinery"],
-            social_assumptions=["people may become threats"],
-            familiarity=[],
-            current_distractions=["the telemetry flicker"],
-        ),
-    },
-    "C": {
-        "profile": _profile(
-            sensory_priorities=["sight", "hearing"],
-            emotional_vocabulary=["warm", "concerned"],
-            association_patterns=["familiar domestic routines"],
-            social_perception="reads people as seeking emotional reassurance",
-        ),
-        "state": _state(
-            attention={
-                "PRIMARY": ["Sable's facial expression", "Sable's tone"],
-                "SECONDARY": ["the room temperature"],
-                "IGNORED": ["the transparent display"],
-            },
-            interpretations=["Sable wants reassurance"],
-            unknown_facts=["what the sealed envelope contains"],
-            emotional_state="concern",
-            emotional_awareness="recognize",
-            associations=["familiar domestic routines"],
-            social_assumptions=["people usually seek emotional reassurance"],
-            familiarity=["the strategy room"],
-            current_distractions=["the chill in the air"],
-        ),
-    },
-}
-
-# Fixed priority order for sparse-constraint selection (mirrors
-# prompt-crafter Step 1.6: inject only load-bearing constraints).
-SPARSE_PRIORITY = [
-    "WHAT_TO_NOTICE",
-    "WHAT_TO_IGNORE",
-    "EMOTIONAL_FRAMING",
-    "WHAT_THE_CHARACTER_THINKS_IT_MEANS",
-    "WHAT_MAY_BE_MISINTERPRETED",
-    "SOCIAL_PERCEPTION",
-    "FAMILIARITY_COMPRESSION",
-    "WHAT_ASSOCIATIONS_ARE_NATURAL",
-    "CURRENT_COGNITIVE_DISTRACTIONS",
-    "SENSORY_PRIORITY",
-]
-SPARSE_CEILING = 5
-
-
-# ------------------------------------------------- prompt assembler (Step 1.6)
-
-
-def _field_has_load(field: str, value) -> bool:
-    """A filter field carries load iff it has substantive content."""
-    if value is None:
-        return False
-    if isinstance(value, str):
-        return bool(value.strip())
-    if isinstance(value, (list, tuple)):
-        return len(value) > 0
-    if isinstance(value, dict):
-        return any(_field_has_load(k, v) for k, v in value.items())
-    return True
-
-
-def assemble_writer_prompt(scene_canon, pov_filter, memory=None):
-    """Deterministic mirror of prompt-crafter Step 1.6 sparse injection.
-
-    Assembles the Writer prompt from ONLY:
-      - scene_canon: current-scene canon, scene-necessary only
-      - pov_filter: the current scene's 16-field POV filter
-      - memory: optional {"fidelity": ..., "recall": ...} carried from the
-        cognitive state's memory entry (part of the cognitive profile
-        summary the real prompt-crafter injects)
-
-    There is NO parameter for hidden truth, other POVs' cognition,
-    registry entries, future payoffs, or other scenes' material -- the
-    signature itself is the quarantine (cf. phase-14 two-argument seam).
-
-    Sparse injection: at most SPARSE_CEILING load-bearing constraints are
-    selected, in SPARSE_PRIORITY order, among fields with substantive
-    content. Fewer than 5 is normal; 0 is legal. Never padded to quota.
-
-    Returns {"document": <markdown the Writer reads>, "constraints": [...],
-             "sections": [...]}.
-    """
-    lines = ["# WRITER PROMPT (behavioral-validation seam)",
-             "## SCENE CANON"]
-    lines += [f"- {text}" for _, text in scene_canon]
-    lines += ["## POV FILTER"]
-    for field, value in pov_filter.items():
-        lines.append(f"- {field}: {_canon(value)}")
-    constraints = []
-    for field in SPARSE_PRIORITY:
-        if len(constraints) >= SPARSE_CEILING:
-            break
-        value = pov_filter.get(field)
-        if _field_has_load(field, value):
-            constraints.append((field, value))
-    lines += ["## SPARSE CONSTRAINTS"]
-    for i, (field, value) in enumerate(constraints, 1):
-        lines.append(f"- [C{i}] {field}: {_canon(value)}")
-    if not constraints:
-        lines.append("- (none: no load-bearing cognitive constraints this scene)")
-    if memory is not None:
-        lines += ["## MEMORY",
-                  f"- fidelity: {memory.get('fidelity', 'unspecified')}",
-                  f"- recall: {memory.get('recall', '')}"]
-    document = "\n".join(lines)
-    return {"document": document,
-            "constraints": [f for f, _ in constraints],
-            "sections": ["SCENE CANON", "POV FILTER", "SPARSE CONSTRAINTS"]
-                        + (["MEMORY"] if memory is not None else [])}
 
 
 def _parse_prompt(document):
@@ -342,9 +154,9 @@ def _parse_prompt(document):
 # ------------------------------------------------- writer adapter (test seam)
 
 
-def writer_adapter(document):
-    """FIXED, POV-AGNOSTIC deterministic Writer adapter. NOT a prose
-    generator. NOT an LLM. NOT a model of writing quality.
+def deterministic_writer_fixture(document):
+    """FIXED, POV-AGNOSTIC deterministic structural fixture. NOT a Writer.
+    NOT a prose generator. NOT an LLM. NOT a model of writing quality.
 
     It reads ONLY the prompt document string and applies the same
     mechanical realization rules to every POV: attention lists become
@@ -358,6 +170,8 @@ def writer_adapter(document):
     Because the function is identical for all POVs, any difference
     between two realizations is PROOF that the prompt documents differed
     -- i.e. that cognitive differentiation survived into Writer input.
+
+    Never present this fixture as real Writer behavior.
     """
     parsed = _parse_prompt(document)
     filt = parsed["filter"]
@@ -430,8 +244,8 @@ def _build_all(memory=None):
     built = {}
     for tag, cfg in POVS.items():
         filt = POV_FILTER.build_filter(cfg["profile"], cfg["state"])
-        prompt = assemble_writer_prompt(SCENE_CANON, filt, memory=memory)
-        realization = writer_adapter(prompt["document"])
+        prompt = build_writer_prompt(SCENE_CANON, filt, memory=memory)
+        realization = deterministic_writer_fixture(prompt["document"])
         built[tag] = {"filter": filt, "prompt": prompt,
                       "realization": realization,
                       "state": cfg["state"], "profile": cfg["profile"]}
@@ -649,13 +463,13 @@ def check_social_cognition_realization():
 
 def check_self_blindness_realization():
     """§8G: true state vs awareness distinction protected in realization."""
-    profile = _profile(emotional_vocabulary=["irritated", "on edge"])
-    state = _state(emotional_state="jealousy", emotional_awareness="mislabeled",
+    profile = make_profile(emotional_vocabulary=["irritated", "on edge"])
+    state = make_state(emotional_state="jealousy", emotional_awareness="mislabeled",
                    attention={"PRIMARY": ["Sable's ease"], "SECONDARY": [],
                               "IGNORED": []})
     filt = POV_FILTER.build_filter(profile, state)
-    prompt = assemble_writer_prompt(SCENE_CANON, filt)
-    real = writer_adapter(prompt["document"])
+    prompt = build_writer_prompt(SCENE_CANON, filt)
+    real = deterministic_writer_fixture(prompt["document"])
     framing = real["emotional_framing"]
     problems = []
     # The true label may appear ONLY inside the EMOTIONAL_FRAMING writer
@@ -679,32 +493,20 @@ def check_self_blindness_realization():
 def check_memory_fidelity_chain():
     """§16: MEMORY FIDELITY -> STATE -> FILTER -> PROMPT -> REALIZATION."""
     canon_quote = "I'll come tomorrow."
-    variants = [
-        ("exact", "I'll come tomorrow.", {"verbatim": True}),
-        ("semantic", "she would visit the next day", {}),
-        ("partial", "she would come... sometime", {}),
-        ("fuzzy", "she said something about coming", {}),
-        ("uncertain", "she might come tomorrow?", {"keeps_hedge": "might"}),
-        ("misremembered", "she would come next week",
-         {"forbids": ["tomorrow"]}),
-        ("emotionally_distorted",
-         "she promised she would come tomorrow (she never keeps promises)",
-         {"keeps": "never keeps promises"}),
-    ]
     problems = []
-    for fidelity, recall, rules in variants:
-        state = _state(interpretations=[recall],
+    for fidelity, recall, rules in MEMORY_VARIANTS:
+        state = make_state(interpretations=[recall],
                        memory={"fidelity": fidelity, "recall": recall})
-        filt = POV_FILTER.build_filter(_profile(), state)
+        filt = POV_FILTER.build_filter(make_profile(), state)
         if recall not in filt["WHAT_THE_CHARACTER_THINKS_IT_MEANS"]:
             problems.append(f"{fidelity}: recall lost at filter")
             continue
-        prompt = assemble_writer_prompt(
+        prompt = build_writer_prompt(
             SCENE_CANON, filt, memory={"fidelity": fidelity, "recall": recall})
         if recall not in prompt["document"]:
             problems.append(f"{fidelity}: recall lost at prompt")
             continue
-        real = writer_adapter(prompt["document"])
+        real = deterministic_writer_fixture(prompt["document"])
         mem = real["memory"]
         if rules.get("verbatim") and mem["recall"] != canon_quote:
             problems.append(f"{fidelity}: exact recall not verbatim")
@@ -736,13 +538,13 @@ def check_epistemic_quarantine():
         if not ok:
             problems.append(f"POV {t}: " + "; ".join(detail[:2]))
     # Distant-voice variant: distance must not leak the hidden truth.
-    profile = _profile(narrative_distance="distant")
-    state = _state(unknown_facts=["what the sealed envelope contains"],
+    profile = make_profile(narrative_distance="distant")
+    state = make_state(unknown_facts=["what the sealed envelope contains"],
                    attention={"PRIMARY": ["the room"], "SECONDARY": [],
                               "IGNORED": []})
     filt = POV_FILTER.build_filter(profile, state)
-    prompt = assemble_writer_prompt(SCENE_CANON, filt)
-    real = writer_adapter(prompt["document"])
+    prompt = build_writer_prompt(SCENE_CANON, filt)
+    real = deterministic_writer_fixture(prompt["document"])
     if HIDDEN_TRUTH in _norm(prompt["document"]) or \
             HIDDEN_TRUTH in _norm(json.dumps(real)):
         problems.append("distant narration leaked hidden truth")
@@ -820,7 +622,7 @@ def check_quarantine_negative_control():
     """Prove the quarantine detector is not vacuous: a smuggled secret FAILS."""
     filt = POV_FILTER.build_filter(POVS["A"]["profile"], POVS["A"]["state"])
     poisoned_canon = SCENE_CANON + [("smuggled", "Note: " + HIDDEN_TRUTH + ".")]
-    prompt = assemble_writer_prompt(poisoned_canon, filt)
+    prompt = build_writer_prompt(poisoned_canon, filt)
     ok, hits = _quarantine_ok(prompt["document"], [HIDDEN_TRUTH])
     if ok:
         return (FAIL, "detector missed a smuggled secret -- checks are vacuous.")
@@ -831,12 +633,12 @@ def check_quarantine_negative_control():
 def check_epistemic_negative_control():
     """Prove the epistemic detector is not vacuous."""
     filt = POV_FILTER.build_filter(POVS["A"]["profile"], POVS["A"]["state"])
-    prompt = assemble_writer_prompt(SCENE_CANON, filt)
+    prompt = build_writer_prompt(SCENE_CANON, filt)
     # Forge a prompt that asserts an unknown as known fact in the canon.
     forged = prompt["document"].replace(
         "## SCENE CANON",
         "## SCENE CANON\n- POV knows what the sealed envelope contains.")
-    real = writer_adapter(prompt["document"])
+    real = deterministic_writer_fixture(prompt["document"])
     ok, detail = _epistemic_ok(forged, real, ["what the sealed envelope contains"])
     if ok:
         return (FAIL, "epistemic detector missed an asserted unknown.")
@@ -846,7 +648,7 @@ def check_epistemic_negative_control():
 
 def check_same_fact_different_attention():
     """§9: story_importance HIGH + character_salience LOW -> may be ignored."""
-    state = _state(
+    state = make_state(
         attention={"PRIMARY": ["Sable's wording"], "SECONDARY": [],
                    "IGNORED": ["the brass key"]},
         salience_map=[{"element": "the brass key",
@@ -854,12 +656,12 @@ def check_same_fact_different_attention():
                        "character_salience": "LOW"}],
         unknown_facts=["what the brass key is for"],
     )
-    filt = POV_FILTER.build_filter(_profile(), state)
+    filt = POV_FILTER.build_filter(make_profile(), state)
     problems = []
     if "the brass key" in filt["WHAT_TO_PRIORITIZE"]:
         problems.append("HIGH story importance forced prioritization")
-    prompt = assemble_writer_prompt(SCENE_CANON, filt)
-    real = writer_adapter(prompt["document"])
+    prompt = build_writer_prompt(SCENE_CANON, filt)
+    real = deterministic_writer_fixture(prompt["document"])
     if "the brass key" in real["attention_order"]:
         problems.append("plot-central object forced into narrative attention")
     if "the brass key" not in real["omitted"]:
@@ -920,10 +722,10 @@ def check_sparse_constraints_valid():
         if not (0 <= n <= SPARSE_CEILING):
             problems.append(f"POV {t}: {n} constraints outside 0-5")
     # Sparse scene: only 2 loaded fields -> exactly 2 injected, never 5.
-    thin_state = _state(
+    thin_state = make_state(
         attention={"PRIMARY": ["the door"], "SECONDARY": [], "IGNORED": []})
-    thin_filter = POV_FILTER.build_filter(_profile(), thin_state)
-    thin_prompt = assemble_writer_prompt(SCENE_CANON, thin_filter)
+    thin_filter = POV_FILTER.build_filter(make_profile(), thin_state)
+    thin_prompt = build_writer_prompt(SCENE_CANON, thin_filter)
     n_thin = len(thin_prompt["constraints"])
     loaded = sum(1 for f in SPARSE_PRIORITY
                  if _field_has_load(f, thin_filter.get(f)))
@@ -931,7 +733,7 @@ def check_sparse_constraints_valid():
         problems.append(f"thin scene: injected {n_thin}, expected "
                         f"{min(loaded, SPARSE_CEILING)} (no quota-filling)")
     # Empty filter stays valid.
-    empty_prompt = assemble_writer_prompt(SCENE_CANON, {})
+    empty_prompt = build_writer_prompt(SCENE_CANON, {})
     if not (0 <= len(empty_prompt["constraints"]) <= SPARSE_CEILING):
         problems.append("empty filter: constraints out of range")
     if problems:
@@ -1083,40 +885,324 @@ def run_level_a():
     return results, counts
 
 
-def run_level_b():
-    """§6: opt-in model-backed benchmark. Honest SKIP: this repository has
-    no model interface (the Writer is a markdown agent role executed by an
-    external harness), so there is nothing to invoke. Never fabricate."""
-    print()
-    print("=" * 70)
-    print("LEVEL B -- MODEL-BACKED BENCHMARK")
-    print("=" * 70)
-    print("MODEL BENCHMARK: SKIPPED")
-    print("REASON: no configured model/runtime")
-    print()
-    print("Detail: agents/writer.md defines the Writer as a markdown role;")
-    print("the repository exposes no model invocation interface, provider")
-    print("shim, or API-key handling (by design -- see §21). Level A")
-    print("deterministic validation above is the complete executable")
-    print("benchmark. To enable Level B in the future, register a runner")
-    print("in MODEL_RUNNERS below; each sample it returns would pass")
-    print("through check_prose_en.check_text (see check_prose_pipeline_wired).")
-    print("=" * 70)
-    return 0
+# ------------------------------------------------- Level B: live-model path
 
 
-# Future extension point for Level B. Empty by design: no provider is
-# hard-coded, no external dependency is introduced.
-MODEL_RUNNERS = {}
+def _model_arg(argv):
+    """Parse `--model [--model <name>]`. Returns (requested, name_or_None)."""
+    if "--model" not in argv:
+        return (False, None)
+    idx = argv.index("--model")
+    nxt = argv[idx + 1] if idx + 1 < len(argv) else None
+    name = nxt if (nxt and not nxt.startswith("-")) else None
+    return (True, name)
+
+
+_LB_STOPWORDS = frozenset(
+    "the a an is are was were be been being of on in at to and or with "
+    "above overhead somewhere against says said say has have had its it "
+    "as by from his her their this that these those".split()
+)
+
+
+def _lb_content_tokens(text):
+    """Content tokens: normalized, stopwords dropped, length >= 3."""
+    return [t for t in _norm(text).split()
+            if t not in _LB_STOPWORDS and len(t) >= 3]
+
+
+def _lb_canon_phrases():
+    """Deterministic per-element token sets, derived from SCENE_CANON."""
+    return {key: {"text": text, "tokens": _lb_content_tokens(text)}
+            for key, text in SCENE_CANON}
+
+
+def _lb_element_presence(prose, phrases):
+    """Classify each canon element's rendering in live prose.
+
+    MENTIONED = at least 2 of the element's content tokens appear (or
+    all of them when the element has fewer than 2); EMPHASIZED = at
+    least 3 appear. Records the first-mention token index. This counts
+    behavioral rendering, never word choice.
+    """
+    words = _norm(prose).split()
+    positions = {}
+    for i, w in enumerate(words):
+        positions.setdefault(w, i)
+    presence = {}
+    for key, ph in phrases.items():
+        toks = ph["tokens"]
+        need = min(2, len(toks))
+        hits = [(t, positions[t]) for t in set(toks) if t in positions]
+        n = len(hits)
+        first = min((p for _, p in hits), default=None)
+        status = ("EMPHASIZED" if n >= 3 and len(toks) >= 3
+                  else "MENTIONED" if n >= need > 0
+                  else "OMITTED")
+        presence[key] = {"status": status, "first": first, "hits": n}
+    return presence
+
+
+def _lb_map_notice_to_element(notice, phrases):
+    """Map a WHAT_TO_NOTICE/IGNORE string to its best canon element.
+
+    Best content-token overlap wins; ties break by overlap ratio (the
+    more specific element wins), then SCENE_CANON order. None when
+    nothing overlaps. The mapping is printed as evidence, never hidden.
+    """
+    ntoks = set(_lb_content_tokens(notice))
+    best, best_score = None, (-1, -1.0)
+    for key, ph in phrases.items():
+        etoks = ph["tokens"]
+        if not etoks:
+            continue
+        overlap = len(ntoks & set(etoks))
+        score = (overlap, overlap / len(etoks))
+        if overlap > 0 and score > best_score:
+            best, best_score = key, score
+    return best
+
+
+def _lb_probe_attention(tag, filt, prose, phrases):
+    """Attention distribution: observed first-mention order vs the
+    filter's WHAT_TO_NOTICE. Reports behavioral consequence; omission
+    or emphasis in live prose is ADVISORY (a signal for human review),
+    never a quality FAIL."""
+    if not prose.strip():
+        return (FAIL, "live prose is empty; nothing to evaluate.")
+    presence = _lb_element_presence(prose, phrases)
+    notice = list(filt.get("WHAT_TO_NOTICE") or [])
+    ignore = list(filt.get("WHAT_TO_IGNORE") or [])
+    mapping = {item: _lb_map_notice_to_element(item, phrases)
+               for item in notice + ignore}
+    ordered = sorted(
+        (item for item in notice if mapping[item]),
+        key=lambda item: (presence[mapping[item]]["first"]
+                          if presence[mapping[item]]["first"] is not None
+                          else float("inf")),
+    )
+    observed = [f"{item}->{mapping[item]}({presence[mapping[item]]['status']})"
+                for item in ordered]
+    unmapped = [i for i in notice if not mapping[i]]
+    omitted = [i for i in notice
+               if mapping[i] and presence[mapping[i]]["status"] == "OMITTED"]
+    ignored_hit = [i for i in ignore
+                   if mapping[i]
+                   and presence[mapping[i]]["status"] == "EMPHASIZED"]
+    evidence = (f"expected notice order: {notice}; observed first-mention "
+                f"order: {observed or ['(none mentioned)']}")
+    notes = []
+    if unmapped:
+        notes.append(f"unmapped notice items (no canon element): {unmapped}")
+    if omitted:
+        notes.append(f"not rendered in prose: {omitted}")
+    if ignored_hit:
+        notes.append(f"ignored items emphasized anyway: {ignored_hit}")
+    if notes:
+        return (ADVISORY, evidence + ". ADVISORY: " + "; ".join(notes))
+    return (PASS, evidence + ". All noticed items rendered; nothing "
+                            "ignored was emphasized.")
+
+
+def _lb_probe_epistemic(tag, filt, prose):
+    """Epistemic leakage: hidden truth/lie must not appear as asserted
+    fact in live prose (normalized exact matching is legitimate for
+    negative evidence). Unknown envelope contents asserted as known
+    are flagged ADVISORY."""
+    norm_prose = _norm(prose)
+    if _norm(HIDDEN_TRUTH) in norm_prose:
+        return (FAIL, "HIDDEN_TRUTH appears in live prose as asserted fact.")
+    if _norm(HIDDEN_LIE) in norm_prose:
+        return (FAIL, "HIDDEN_LIE appears in live prose as asserted fact.")
+    cues = {"contains", "contain", "holds", "holding", "inside",
+            "reveals", "revealed", "hides", "hiding", "conceals"}
+    flags = []
+    if "envelope" in norm_prose:
+        for sent in re.split(r"[.!?]+", prose):
+            slow = _norm(sent)
+            if "envelope" in slow and (set(slow.split()) & cues):
+                flags.append(sent.strip()[:120])
+    if flags:
+        return (ADVISORY, "unknown envelope contents possibly asserted: "
+                          + " | ".join(flags))
+    return (PASS, "hidden truth/lie absent from live prose; unknowns not "
+                  "asserted as known.")
+
+
+_LB_HEDGE_WORDS = {"might", "maybe", "perhaps", "possibly"}
+
+
+def _lb_probe_memory(tag, runner, filt):
+    """Memory fidelity across MEMORY_VARIANTS on live prose (one
+    generation per variant). Hard rules: exact stays verbatim; degraded
+    variants never restore canon wording. Hedge/marker loss is
+    ADVISORY; other variants are evidence only."""
+    notes, problems, advisories = [], [], []
+    for fidelity, recall, rules in MEMORY_VARIANTS:
+        prompt = build_writer_prompt(
+            SCENE_CANON, filt, memory={"fidelity": fidelity, "recall": recall})
+        try:
+            prose = runner.generate(prompt["document"])
+        except Exception as exc:  # noqa: BLE001 -- runner failure is a FAIL
+            return (FAIL, f"memory probe generation failed ({fidelity}): "
+                          f"{type(exc).__name__}: {exc}")
+        norm_prose = _norm(prose if isinstance(prose, str) else "")
+        if rules.get("verbatim"):
+            if _norm(recall) not in norm_prose:
+                problems.append(f"{fidelity}: exact recall not verbatim")
+            else:
+                notes.append(f"{fidelity}: verbatim ok")
+        for forbidden in rules.get("forbids", []):
+            if forbidden in norm_prose:
+                problems.append(f"{fidelity}: canon wording restored "
+                                f"({forbidden})")
+        if "keeps_hedge" in rules:
+            if set(norm_prose.split()) & _LB_HEDGE_WORDS:
+                notes.append(f"{fidelity}: hedge kept")
+            else:
+                advisories.append(f"{fidelity}: hedge lost/upgraded")
+        if "keeps" in rules:
+            if _norm(rules["keeps"]) in norm_prose:
+                notes.append(f"{fidelity}: distortion marker kept")
+            else:
+                advisories.append(f"{fidelity}: distortion marker not surfaced")
+        if not rules:
+            surfaced = "surfaced" if _norm(recall) in norm_prose else "not surfaced"
+            notes.append(f"{fidelity}: recall {surfaced} (evidence only)")
+    evidence = "; ".join(notes + advisories + problems)
+    if problems:
+        return (FAIL, evidence)
+    if advisories:
+        return (ADVISORY, evidence)
+    return (PASS, evidence)
+
+
+def _lb_probe_prose_rules(tag, prose):
+    """Global prose rules: every live sample through the existing
+    check-prose-en entry point (reused, not duplicated)."""
+    res = CHECK_EN.check_text(prose)
+    evidence = (f"{res.words} words, {res.paragraphs} paragraphs, "
+                f"{len(res.failures)} failures, {len(res.warnings)} warnings")
+    if res.failures:
+        return (FAIL, evidence + ": " + "; ".join(res.failures[:3]))
+    if res.warnings:
+        return (ADVISORY, evidence + ": " + "; ".join(res.warnings[:3]))
+    return (PASS, evidence + ": clean.")
+
+
+def _lb_probe_interpretation_advisory(tag, filt, prose):
+    """Interpretation preserved as POV-tagged belief? Genuine judgment
+    -> always ADVISORY, with the raw prose attached for human review.
+    ADVISORY is never a failure."""
+    interps = list(filt.get("WHAT_THE_CHARACTER_THINKS_IT_MEANS") or [])
+    norm_prose = _norm(prose)
+    surfaced = []
+    for belief in interps:
+        toks = _lb_content_tokens(belief)
+        hit = len(toks) >= 2 and sum(1 for t in toks if t in norm_prose) >= 2
+        surfaced.append(f"{belief[:50]!r}: {'surfaced' if hit else 'not surfaced'}")
+    raw = prose.strip()
+    if len(raw) > 1500:
+        raw = raw[:1500] + "… [truncated]"
+    return (ADVISORY,
+            "Human judgment required: is the interpretation preserved as "
+            "POV-tagged belief rather than narrator assertion? "
+            + "; ".join(surfaced)
+            + f"\n--- RAW PROSE (POV {tag}) ---\n" + raw)
+
+
+def _run_level_b_pov(tag, runner):
+    """One POV: production filter -> PRODUCTION build_writer_prompt ->
+    live generation -> consequence probes."""
+    cfg = POVS[tag]
+    filt = POV_FILTER.build_filter(cfg["profile"], cfg["state"])
+    prompt = build_writer_prompt(SCENE_CANON, filt)  # the production seam
+    try:
+        prose = runner.generate(prompt["document"])
+    except Exception as exc:  # noqa: BLE001 -- runner failure is a FAIL
+        return [("Live generation", FAIL,
+                 f"runner.generate raised {type(exc).__name__}: {exc}")]
+    if not isinstance(prose, str):
+        return [("Live generation", FAIL,
+                 f"runner.generate returned {type(prose).__name__}, not str")]
+    phrases = _lb_canon_phrases()
+    probes = [
+        ("Attention distribution",
+         _lb_probe_attention(tag, filt, prose, phrases)),
+        ("Epistemic leakage",
+         _lb_probe_epistemic(tag, filt, prose)),
+        ("Memory fidelity",
+         _lb_probe_memory(tag, runner, filt)),
+        ("Global prose rules",
+         _lb_probe_prose_rules(tag, prose)),
+        ("Interpretation as POV belief (judgment)",
+         _lb_probe_interpretation_advisory(tag, filt, prose)),
+    ]
+    return [(label, status, evidence) for label, (status, evidence) in probes]
+
+
+def run_level_b(model):
+    """§6: opt-in live benchmark through the production seam.
+
+    Resolves a user-supplied backend via writer_runner.resolve_live_runner
+    (NOVEL_WRITER_RUNNER="module:factory_path"). On LiveModelUnavailable
+    prints exactly `LEVEL B SKIPPED — live model unavailable` plus the
+    reason and returns skipped=True: a skip is never reported as a pass.
+
+    Returns (counts, skipped). No humanity score, no ranking.
+    """
+    print()
+    print("=" * 70)
+    print("LEVEL B -- LIVE BENCHMARK (opt-in)")
+    print("=" * 70)
+    try:
+        runner = resolve_live_runner(model)
+    except LiveModelUnavailable as exc:
+        print("LEVEL B SKIPPED — live model unavailable")
+        print(f"REASON: {exc}")
+        print("=" * 70)
+        return ({PASS: 0, FAIL: 0, ADVISORY: 0}, True)
+    counts = {PASS: 0, FAIL: 0, ADVISORY: 0}
+    per_pov = {}
+    for tag in "ABC":
+        results = _run_level_b_pov(tag, runner)
+        per_pov[tag] = results
+        print(f"--- POV {tag} ---")
+        for label, status, evidence in results:
+            counts[status] += 1
+            print(f"{status:<9} {label}: {evidence}")
+        print()
+    print("=" * 70)
+    print("LEVEL B CROSS-POV MATRIX (qualitative evidence, no ranking)")
+    print("=" * 70)
+    labels = []
+    for tag in "ABC":
+        for label, _, _ in per_pov[tag]:
+            if label not in labels:
+                labels.append(label)
+    status_of = {t: {label: status for label, status, _ in per_pov[t]}
+                 for t in "ABC"}
+    print(f"  {'PROBE':<42} {'A':<9} {'B':<9} {'C':<9}")
+    for label in labels:
+        row = [status_of[t].get(label, "-") for t in "ABC"]
+        print(f"  {label:<42} {row[0]:<9} {row[1]:<9} {row[2]:<9}")
+    print()
+    print(f"Level B: {counts[PASS]} passed, {counts[ADVISORY]} advisory, "
+          f"{counts[FAIL]} failed")
+    print("=" * 70)
+    return (counts, False)
 
 
 def main() -> int:
-    _, counts = run_level_a()
-    if "--model" in sys.argv:
-        run_level_b()
+    _, counts_a = run_level_a()
+    requested, model = _model_arg(sys.argv)
+    counts_b = {PASS: 0, FAIL: 0, ADVISORY: 0}
+    if requested:
+        counts_b, _skipped = run_level_b(model)
+    fails = counts_a[FAIL] + counts_b[FAIL]
     # Exit 0 iff no FAIL. ADVISORY is allowed. A skipped Level B is not
-    # a failure.
-    return 0 if counts[FAIL] == 0 else 1
+    # a failure and is never reported as a pass.
+    return 0 if fails == 0 else 1
 
 
 if __name__ == "__main__":

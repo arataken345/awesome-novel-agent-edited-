@@ -9,7 +9,7 @@ entries, and tribal knowledge — where they get duplicated, contradicted, or
 silently overridden by a lower-level default. This layer makes the rules
 **persistent, sourced, scoped, and precedence-ordered**.
 
-## The hierarchy (§48/§92)
+## The hierarchy (§48)
 
 Highest first:
 

@@ -5,7 +5,7 @@
 ## 流程概览
 
 ```text
-Step 1: 读取输入源（10 类文件）
+Step 1: 读取输入源（12 类文件）
 Step 2: 按 6 元素 Prompt 结构填充：角色 / 任务指示 / 背景信息 / 案例 / 输入 / 输出
 Step 3: 冲突检测
 Step 4: 验收自检
@@ -13,7 +13,7 @@ Step 4: 验收自检
 
 ## Step 1: 读取输入源
 
-> 10 类文件（含写作记忆/提示词记忆/永久记忆）。
+> 12 类文件（含写作记忆/提示词记忆/永久记忆）。
 
 1. **writing-style.md（主卡）** → 提取正文定性层四字段（叙事身份 / 硬约束 / AI 易犯错误 / 描写层次和手法）+ 量化层 9 大维度 + confidence。**双态**：confidence=0 → 只注入定性层（读主卡正文 → 定性四字段注入，现状不变）；confidence>0 → 按 rendering-rules.md 渲染案例 2（读主卡 + 场景卡 frontmatter → 量化节 + 声音层透传）
 2. **上一章 chapter.md**（`chapters/vol-{N}-ch-{M-1}.md`）→ 提取 emotional_design（情绪钩子 emotional_hook + 章末落点，取 mood_progression 末段）+ required_changes，据此还原上章结尾画面；`volume.md` 前章摘要辅助
@@ -79,8 +79,8 @@ Step 4: 验收自检
 目标：让 writer 以场景 POV 角色的**人类认知**写作，而非全知叙述。
 
 1. **读取**：`.agent/cognition/vol-{N}-ch-{M}.md`（认知状态）+ 角色的 narrator voice profile（filter-spec 16 字段）
-2. **每场景装配一个 POV filter**（`tools/pov_filter.py build_filter` 语义）
-3. **稀疏注入**：prompt 场景段只注入该场景 POV 的 filter + 认知档案摘要——注意力排序（高认知/低认知细节清单）、认知层（KNOWN/FACT 可自由叙述；HEDGED 层用情态/推断标记表达；UNKNOWN/ABSENT 层禁止表现；DELIBERATE_GAP 层禁止主动填补）、错误信念与死路（只表现行为，不解释）、解释误差（该角色系统的解释与他人的差异）
+2. **每场景装配一个 POV filter**：filter 构造遵循 `tools/pov_filter.py::build_filter` 语义；filter 到 prompt 文本的机械组装（稀疏选择 + 序列化）以 `tools/build_writer_prompt.py::build_writer_prompt` 为权威实现——**prompt-crafter agent 不得自行重实现该逻辑，任何 benchmark 也不得重实现**
+3. **稀疏注入**：prompt 场景段只注入该场景 POV 的 filter + 认知档案摘要——注意力排序（高认知/低认知细节清单）、认知层（KNOWN/FACT 可自由叙述；HEDGED 层用情态/推断标记表达；UNKNOWN/ABSENT 层禁止表现；DELIBERATE_GAP 层禁止主动填补；缩写 → `knowledge/cognition/epistemic-layers.md` 11 层映射：KNOWN/FACT = POV 已确立知识（FACT 层视角直接陈述，已确立的 OBSERVATION/MEMORY 同理）；HEDGED = 需情态/推断标记的中层（BELIEF / GUESS / SUSPICION / RUMOR / INTERPRETATION / MISINTERPRETATION / UNCERTAINTY，按 epistemic-layers.md 规则 1 必须带 hedged 感知标记）；UNKNOWN/ABSENT = UNKNOWN 层；DELIBERATE_GAP = 知识晶格 WITHHELD/刻意留白位（lattice 记录真相但 POV 不知道的戏剧反讽位，非新增认知层））、错误信念与死路（只表现行为，不解释）、解释误差（该角色系统的解释与他人的差异）
 4. **注入纪律**：每场景最多 5 条 filter 约束；只注入本章**本场景 POV** 的 cognition/filter，全章档案/他场景 POV 不注入（writer 按"读什么"纪律只读 order+prompt+设定，不读 cognition 全文）
 **SPARSE_FILTER_RULE（稀疏注入硬规则）：** 0–5 条是允许的载荷区间，**5 是上限（ceiling），不是配额（quota）**。只注入对本场景**实质载荷**的约束（会实际改变本场景写法的约束）；对写法无实质影响的不注入。示例：如果本场景真正起作用的只有 WHAT_TO_NOTICE / WHAT_TO_IGNORE / EMOTIONAL_FRAMING，就精确注入 3 条——**永远不为了凑满 5 条而制造约束**。0 条也合法（本场景认知约束已由场景卡/红线覆盖时）。
 **Registry 隔离：** unresolved-registry / delayed-meaning 注册表条目**永远不注入** writer prompt。注册表只流向 updater 归档（writing → registry），永不回流写作 prompt（注入即制造自动伏笔，见 `knowledge/cognition/registries.md`）。

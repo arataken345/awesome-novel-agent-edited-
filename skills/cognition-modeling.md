@@ -77,7 +77,7 @@ List notable elements with two independent ratings:
 Where they diverge, note the divergence explicitly — it is a feature, not
 a bug. The narrator-voice layer uses it to calibrate description density.
 
-## Step 6 — The "why" audit (§94)
+## Step 6 — The "why" audit
 
 For every non-trivial entry, answer: *Why would this character do this?
 Notice this? Remember this? Misunderstand this? Focus on this?* If there is

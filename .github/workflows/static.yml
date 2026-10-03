@@ -40,6 +40,20 @@ jobs:
         run: python tools/test_check_prose.py
       - name: Run cognition tests
         run: python tools/test_cognition.py
+      - name: Run prose global-rule tests
+        run: python tools/test_prose_global_rules.py
+      - name: Run cognition hardening tests
+        run: python tools/test_cognition_hardening.py
+      - name: Run cognition benchmark
+        run: python tools/test_cognition_benchmark.py
+      - name: Run writer behavioral validation
+        run: python tools/test_writer_behavioral.py
+      - name: Run preservation tests
+        run: python tools/test_cognition_preservation.py
+      - name: Run memory-path tests
+        run: python tools/test_memory_path.py
+      - name: Run seam-integrity tests
+        run: python tools/test_seam_integrity.py
       - name: style-distiller 验证
         run: |
           python tools/test_style_distill.py
