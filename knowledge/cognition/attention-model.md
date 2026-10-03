@@ -21,7 +21,7 @@ goals, emotion, habit, and threat — not narrative importance.
 
 ## What moves attention
 
-Goals, emotion, personality, profession, current concern, environment,
+Drives, emotion, personality, profession, current concern, environment,
 familiarity, threat, social context, fatigue/stress. The cognitive state must
 record *why* attention sits where it does — attention without a cause is just
 as artificial as uniform attention.

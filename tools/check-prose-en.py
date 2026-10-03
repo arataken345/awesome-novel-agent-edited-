@@ -6,6 +6,11 @@ Enforces the deterministic subset of the global writing rules
 (knowledge/global-rules/): colon/semicolon bans, dialogue paragraph
 architecture, plus the measurable AI-tell subset.
 
+General-framework port of the project's English prose checker approach
+(adapted: colon/semicolon as hard failures per user-explicit global
+defaults, em dash as corpus-level tendency only, novel-specific header
+checks removed, refactored into importable check_text()).
+
 Usage: python3 tools/check-prose-en.py <manuscript path|-> [--pov NAME] [--min-words N]
 Exit codes: 0 = no failures (warnings may exist); 1 = failures present; 2 = read error.
 
