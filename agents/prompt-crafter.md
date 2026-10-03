@@ -37,6 +37,12 @@ knowledge:
     description: 分场景风格卡（场景类型识别后按需加载）
   - path: .claude/knowledge/distilled-style-spec.md
     description: 蒸馏风格卡格式规范
+  - path: .claude/knowledge/global-rules/README.md
+    description: 全局写作规则层索引（规则层级/文件分工）
+  - path: .claude/knowledge/global-rules/default-rules.md
+    description: 全局写作规则默认集（硬规则注入输出·不可违反规则，软倾向注入背景信息）
+  - path: .claude/knowledge/global-rules/rule-model.md
+    description: 规则模型（层级/来源/作用域/覆盖机制，Step 1.6 冲突裁决用）
 ---
 
 # prompt-crafter

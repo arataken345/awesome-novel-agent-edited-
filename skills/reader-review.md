@@ -187,6 +187,8 @@ Phase 4: 终局判决 → 追不追？致命伤？一句话
 
 报告格式：`[H{n}] 段落引用 — 证据一句话`。命中 ≥3 个建议 novel-agent 考虑退回 anti-ai 或重跑 cognition-agent（**建议**，非判决）。
 
+审计时同步对照 `.claude/knowledge/global-rules/default-rules.md` 的硬规则（冒号/分号/对话段落架构）：风格违规与认知违规分开标注——前者是规则违反，后者是人性缺失。
+
 
 ## Phase 4：终局判决
 

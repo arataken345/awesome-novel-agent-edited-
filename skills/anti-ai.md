@@ -137,6 +137,8 @@ English manuscripts: run `check-prose-en.py` instead of `check-prose.py`
 dialogue paragraph architecture — plus AI-tell warnings; exit 0/1/2).
 Language selection: order-specified, or CJK character ratio < 5% → English.
 `check-chapter.py` runs for both languages.
+The deterministic subset mirrors `.claude/knowledge/global-rules/default-rules.md`
+(hard rules = failures, soft tendencies = warnings only).
 
 （Windows 无 `python3` 时改用 `python` 或 `py`，下同）
 
