@@ -469,6 +469,7 @@ def deploy_tools(project_path: Path, platform: Platform):
         ("check-prose.py", "anti-ai 机器初筛将降级为模型肉眼"),
         ("check-chapter.py", "章节交付硬伤检查不可用"),
         ("check-prose-en.py", "英文正文全局规则硬校验不可用"),
+        ("prose_global_rules.py", "正文检查器共享规则模块缺失，检查器将降级提示重跑 init/sync"),
     ):
         src = SKILL_HOME / "tools" / name
         if not src.exists():
@@ -520,15 +521,16 @@ def deploy_knowledge(project_path: Path, genre: str, platform: Platform, length=
         print(f"  ⚠️  缺题材档案 knowledge/genre-example/{genre}.md——"
               f"不生成 genre-example.md，settings 保留占位（请在设定阶段与作者补全）")
 
-    # 反 AI 规则：正向方法 + 通用 + 题材 + 方法论 + 误杀防护 + 结构热源（合并为单个 anti-ai.md）
-    # 注：living-voice / common-rules / anti-ai-writing / boundary-cases / structural-heat
+    # 反 AI 规则：正向方法 + 通用 + 题材 + 方法论 + 误杀防护 + 结构热源 +  hedge 保护（合并为单个 anti-ai.md）
+    # 注：living-voice / common-rules / anti-ai-writing / boundary-cases / structural-heat / hedge-protection
     #     是 anti-ai agent 的必需输入，统一合并进 .claude/knowledge/anti-ai.md，
     #     避免部署后多个失效路径。
-    #     living-voice 排最前：正向方法论（先讲写成什么样）置顶，禁用表随后。
+    #     living-voice 排最前：正向方法论（先讲写成什么样）置顶，禁用表随后；
+    #     hedge-protection 排最后：误杀防护守卫，禁止编辑遍把对冲感知升级为事实陈述。
     anti_ai_content = []
     anti_ai_content.append("# 反 AI 规则\n\n[community-defaults]\n")
     for fname in ("living-voice.md", "common-rules.md", "anti-ai-writing.md",
-                  "boundary-cases.md", "structural-heat.md"):
+                  "boundary-cases.md", "structural-heat.md", "hedge-protection.md"):
         f = SOURCE_ANTI_AI / fname
         if f.exists():
             anti_ai_content.append(f"\n---\n\n{f.read_text(encoding='utf-8')}")

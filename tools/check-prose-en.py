@@ -4,7 +4,9 @@
 Framework counterpart to check-prose.py (which is Chinese-oriented).
 Enforces the deterministic subset of the global writing rules
 (knowledge/global-rules/): colon/semicolon bans, dialogue paragraph
-architecture, plus the measurable AI-tell subset.
+architecture, plus the measurable AI-tell subset. The deterministic
+rules are implemented once in tools/prose_global_rules.py and shared
+with check-prose.py (Chinese); this checker calls them.
 
 General-framework port of the project's English prose checker approach
 (adapted: colon/semicolon as hard failures per user-explicit global
@@ -54,6 +56,14 @@ from pathlib import Path
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
         _stream.reconfigure(encoding="utf-8")
+
+
+try:
+    import prose_global_rules as _gr
+    _GR_IMPORT_ERROR: ImportError | None = None
+except ImportError as _error:  # deployed standalone copy without the shared module
+    _gr = None
+    _GR_IMPORT_ERROR = _error
 
 
 # ---------------------------------------------------------------- patterns
@@ -119,63 +129,6 @@ FORESHADOW_PATTERNS = (
 
 PRONOUNS = {"he", "she", "they", "it", "we", "you", "i"}
 
-ATTRIBUTION = re.compile(
-    r"\b(said|asked|replied|whispered|shouted|murmured|answered|added|continued"
-    r"|called|told)\b\s+([A-Za-z']+)|([A-Za-z']+)\s+"
-    r"\b(said|asked|replied|whispered|shouted|murmured|answered|added|continued"
-    r"|called|told)\b",
-    re.IGNORECASE)
-
-
-def _looks_like_speech(match: re.Match[str]) -> bool:
-    """Quoted terms/excerpts ("sheet 4", "within tolerance.") are not dialogue.
-    Convention: real dialogue starts capitalized."""
-    inner = match.group()[1:-1]
-    m = re.search(r"[A-Za-z]", inner)
-    return m is not None and m.group().isupper()
-
-
-def dialogue_violation(text: str) -> str | None:
-    """One paragraph = one contiguous dialogue unit. Returns reason or None.
-
-    An interrupted single speech ('"X," she said, "Y."') is one unit.
-    Violations: two distinct speakers, two quoted segments with no speaker
-    signal at all, or 3+ quoted segments.
-    """
-    pairs = [m for m in QUOTE_PAIR.finditer(text) if _looks_like_speech(m)]
-    if len(pairs) < 2:
-        return None
-    if len(pairs) > 2:
-        return f"{len(pairs)} quoted segments in one paragraph"
-    unquoted = QUOTE_PAIR.sub(lambda m: " " * len(m.group()), text)
-    named: set[str] = set()
-    pro: set[str] = set()
-    for m in ATTRIBUTION.finditer(unquoted):
-        sp = (m.group(2) or m.group(3) or "").lower()
-        if not sp:
-            continue
-        (pro if sp in PRONOUNS else named).add(sp)
-    for i in range(len(pairs) - 1):
-        bridge = text[pairs[i].end():pairs[i + 1].start()]
-        pro.update(w.lower() for w in
-                   re.findall(r"\b(he|she|they|i|we|you)\b", bridge, re.IGNORECASE))
-    persons = set(named)
-    if not named:
-        persons = set(pro)
-    elif len(named) == 1:
-        pass  # pronouns absorbed by the lone named speaker
-    else:
-        persons = set(named) | set(pro)
-    if len(persons) >= 2:
-        return f"two distinct speakers ({', '.join(sorted(persons))}) in one paragraph"
-    if not persons:
-        return "two quoted segments with no speaker signal between them"
-    return None
-
-
-EM_DASH = re.compile(r"[—–]")
-QUOTE_PAIR = re.compile(r'"[^"\n]*"')
-
 
 @dataclass
 class Paragraph:
@@ -208,27 +161,6 @@ def line_number(text: str, position: int) -> int:
 def excerpt(value: str, width: int = 72) -> str:
     value = re.sub(r"\s+", " ", value).strip()
     return value if len(value) <= width else value[: width - 1] + "…"
-
-
-def mask_non_prose(text: str) -> str:
-    """Mask frontmatter, code, links, URLs, HTML tags; keep positions/newlines."""
-
-    def mask(match: re.Match[str]) -> str:
-        return "".join("\n" if c == "\n" else " " for c in match.group())
-
-    patterns = (
-        re.compile(r"\A---\s*\n.*?\n---\s*(?:\n|\Z)", re.DOTALL),
-        re.compile(r"<!--.*?-->", re.DOTALL),
-        re.compile(r"```.*?```", re.DOTALL),
-        re.compile(r"`[^`\n]*`"),
-        re.compile(r"\]\([^)\n]*\)"),
-        re.compile(r"https?://[^\s)>]+"),
-        re.compile(r"<[^>\n]+>"),
-    )
-    masked = text
-    for pattern in patterns:
-        masked = pattern.sub(mask, masked)
-    return masked
 
 
 def split_paragraphs(text: str):
@@ -307,7 +239,13 @@ def check_text(text: str, pov: str | None = None, min_words: int = 0) -> CheckRe
     min_words=0 disables the word-floor check.
     """
     result = CheckResult(pov=pov)
-    prose = mask_non_prose(text)
+    if _gr is None:
+        result.failures.append(
+            "Shared rule module prose_global_rules.py is missing next to this "
+            f"script ({_GR_IMPORT_ERROR}); re-run init/sync to deploy it."
+        )
+        return result
+    prose = _gr.mask_non_prose(text)
     paragraphs = split_paragraphs(prose)
     result.words = word_count(prose)
     result.paragraphs = len(paragraphs)
@@ -321,24 +259,31 @@ def check_text(text: str, pov: str | None = None, min_words: int = 0) -> CheckRe
 
     # 1. Colon in prose — forbidden (global hard rule).
     for p in paragraphs:
-        for m in re.finditer(r":", p.text):
+        hits = _gr.find_colons(p.text)
+        if hits:
             result.failures.append(
-                f"Colon in prose, line {line_number(text, p.position + m.start())}: "
+                f"Colon in prose, line {line_number(text, p.position + hits[0])}: "
                 f"\"{excerpt(p.text, 60)}\"")
-            break  # one report per paragraph
 
     # 2. Semicolon in prose — forbidden (global hard rule).
     for p in paragraphs:
-        for m in re.finditer(r";", p.text):
+        hits = _gr.find_semicolons(p.text)
+        if hits:
             result.failures.append(
-                f"Semicolon in prose, line {line_number(text, p.position + m.start())}: "
+                f"Semicolon in prose, line {line_number(text, p.position + hits[0])}: "
                 f"\"{excerpt(p.text, 60)}\"")
-            break
 
     # 3. One paragraph = one dialogue unit.
     for p in paragraphs:
-        reason = dialogue_violation(p.text)
-        if reason:
+        violation = _gr.dialogue_violation(p.text)
+        if violation:
+            if violation.kind == "speakers":
+                reason = (f"two distinct speakers ({violation.detail}) "
+                          "in one paragraph")
+            elif violation.kind == "no_signal":
+                reason = "two quoted segments with no speaker signal between them"
+            else:
+                reason = f"{violation.detail} quoted segments in one paragraph"
             result.failures.append(
                 f"Two dialogues in one paragraph ({reason}), "
                 f"line {line_number(text, p.position)}: \"{excerpt(p.text, 60)}\"")
@@ -368,7 +313,7 @@ def check_text(text: str, pov: str | None = None, min_words: int = 0) -> CheckRe
     # ---- corpus-level tendencies (warnings only) ----
 
     # W0. Em dash: extremely rare tendency — tracked, never a failure.
-    dash_hits = list(EM_DASH.finditer(prose))
+    dash_hits = list(_gr.EM_DASH_RE.finditer(prose))
     result.em_dashes = len(dash_hits)
     if result.em_dashes > 5:
         lines = sorted({line_number(text, m.start()) for m in dash_hits})

@@ -3,8 +3,9 @@
 
 移植自 human-writing skill 的 scripts/check_prose.py
 （MIT License, Copyright (c) 2026 Human Writing Skill contributors），
-按本项目 knowledge/anti-ai/common-rules.md 口径调整：
-- 冒号不检查（网文无此禁令）；
+按 knowledge/global-rules/default-rules.md 全局硬规则执行（确定性实现见
+tools/prose_global_rules.py，与 check-prose-en.py 共用同一份）：
+- 正文冒号/分号（含全角：；）为硬失败；直接引出对话引语的冒号（如他说：“…”）除外；
 - 破折号不做硬禁，段落内 ≥3 处时提示逐处按用法判定（common-rules.md 破折号判定）；
 - 段落按行切分（网文章节每段一行，空行仅作分隔）。
 
@@ -24,6 +25,14 @@ from pathlib import Path
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
         _stream.reconfigure(encoding="utf-8")
+
+
+try:
+    import prose_global_rules as _gr
+    _GR_IMPORT_ERROR: ImportError | None = None
+except ImportError as _error:  # deployed standalone copy without the shared module
+    _gr = None
+    _GR_IMPORT_ERROR = _error
 
 
 HARD_STOPS = (
@@ -231,26 +240,6 @@ def excerpt(value: str, width: int = 72) -> str:
     return value if len(value) <= width else value[: width - 1] + "…"
 
 
-def mask_non_prose(text: str) -> str:
-    """屏蔽代码、网址和机器元数据，同时保留字符位置与换行。"""
-
-    def mask(match: re.Match[str]) -> str:
-        return "".join("\n" if char == "\n" else " " for char in match.group())
-
-    patterns = (
-        re.compile(r"\A---\s*\n.*?\n---\s*(?:\n|\Z)", re.DOTALL),
-        re.compile(r"```.*?```", re.DOTALL),
-        re.compile(r"`[^`\n]*`"),
-        re.compile(r"\]\([^\n)]*\)"),
-        re.compile(r"https?://[^\s)>]+"),
-        re.compile(r"<[^>\n]+>"),
-    )
-    masked = text
-    for pattern in patterns:
-        masked = pattern.sub(mask, masked)
-    return masked
-
-
 def non_overlapping_terms(text: str, terms: tuple[str, ...]):
     matches = []
     occupied = []
@@ -408,7 +397,15 @@ def main() -> int:
         print(f"无法读取稿件。{error}", file=sys.stderr)
         return 2
 
-    prose = mask_non_prose(text)
+    if _gr is None:
+        print(
+            f"缺少共享规则模块 prose_global_rules（{_GR_IMPORT_ERROR}），"
+            "请重新运行 init/sync 部署。",
+            file=sys.stderr,
+        )
+        return 2
+
+    prose = _gr.mask_non_prose(text)
     total_han = han_count(prose)
     if total_han == 0:
         print("没有检测到汉字。", file=sys.stderr)
@@ -458,6 +455,36 @@ def main() -> int:
             f"模型路标，第 {line_number(text, match.start())} 行，"
             f"“{excerpt(match.group().lstrip(ROAD_STRIP_CHARS))}”"
         )
+
+    # ---- 全局硬规则（knowledge/global-rules/default-rules.md §2–§4）。
+    # 确定性实现见 tools/prose_global_rules.py，与 check-prose-en.py 共用。
+    paragraphs = prose_paragraphs(prose)
+    for paragraph in paragraphs:
+        colon_hits = _gr.find_colons(paragraph.text)
+        if colon_hits:
+            failures.append(
+                f"冒号，第 {line_number(text, paragraph.position + colon_hits[0])} 行，"
+                f"“{excerpt(paragraph.text, 60)}”"
+            )
+        semicolon_hits = _gr.find_semicolons(paragraph.text)
+        if semicolon_hits:
+            failures.append(
+                f"分号，第 {line_number(text, paragraph.position + semicolon_hits[0])} 行，"
+                f"“{excerpt(paragraph.text, 60)}”"
+            )
+        violation = _gr.dialogue_violation(paragraph.text)
+        if violation:
+            if violation.kind == "speakers":
+                reason = f"两个说话人（{violation.detail}）"
+            elif violation.kind == "no_signal":
+                reason = "两段引语之间没有说话人信号"
+            else:
+                reason = f"一段内有 {violation.detail} 段引语"
+            failures.append(
+                f"一段内多个对话单元（{reason}），"
+                f"第 {line_number(text, paragraph.position)} 行，"
+                f"“{excerpt(paragraph.text, 60)}”"
+            )
 
     pivots = all_matches(prose, PIVOT_PATTERNS)
     for match in pivots:
@@ -562,8 +589,6 @@ def main() -> int:
         warnings.append(
             f"有 {len(dense_de)} 个长句包含四个以上的“的”，可能要先交代人和动作。{samples}"
         )
-
-    paragraphs = prose_paragraphs(prose)
 
     dash_dense_paragraphs = 0
     for paragraph in paragraphs:

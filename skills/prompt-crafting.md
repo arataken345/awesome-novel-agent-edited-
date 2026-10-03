@@ -82,6 +82,8 @@ Step 4: 验收自检
 2. **每场景装配一个 POV filter**（`tools/pov_filter.py build_filter` 语义）
 3. **稀疏注入**：prompt 场景段只注入该场景 POV 的 filter + 认知档案摘要——注意力排序（高认知/低认知细节清单）、认知层（KNOWN/FACT 可自由叙述；HEDGED 层用情态/推断标记表达；UNKNOWN/ABSENT 层禁止表现；DELIBERATE_GAP 层禁止主动填补）、错误信念与死路（只表现行为，不解释）、解释误差（该角色系统的解释与他人的差异）
 4. **注入纪律**：每场景最多 5 条 filter 约束；只注入本章**本场景 POV** 的 cognition/filter，全章档案/他场景 POV 不注入（writer 按"读什么"纪律只读 order+prompt+设定，不读 cognition 全文）
+**SPARSE_FILTER_RULE（稀疏注入硬规则）：** 0–5 条是允许的载荷区间，**5 是上限（ceiling），不是配额（quota）**。只注入对本场景**实质载荷**的约束（会实际改变本场景写法的约束）；对写法无实质影响的不注入。示例：如果本场景真正起作用的只有 WHAT_TO_NOTICE / WHAT_TO_IGNORE / EMOTIONAL_FRAMING，就精确注入 3 条——**永远不为了凑满 5 条而制造约束**。0 条也合法（本场景认知约束已由场景卡/红线覆盖时）。
+**Registry 隔离：** unresolved-registry / delayed-meaning 注册表条目**永远不注入** writer prompt。注册表只流向 updater 归档（writing → registry），永不回流写作 prompt（注入即制造自动伏笔，见 `knowledge/cognition/registries.md`）。
 5. **全局硬规则**（no-colon/no-semicolon/one-dialogue-per-paragraph）注入为不可违反规则，写入"输出·不可违反规则"；em-dash 稀有倾向注入为"本章建议"
 6. **规则冲突**：filter/认知档案与上层规则冲突时按 §48 优先级裁决（用户显式命令 > user_global > project_canon > chapter > scene > character > observed_style > agent_default > model_default），显式窄域覆盖优先；禁止推断覆盖
 
@@ -147,6 +149,7 @@ Step 4: 验收自检
 - 禁止：角色内心活动、认知动词（意识到/发现/明白）、情绪结论
 
 信息差从章纲 knowledge_state 的"信息差关系"中取本场景对应的那对关系。
+**信息差 POV 侧过滤（防泄漏）：** 信息差对必须先过 POV 知识格（lattice）再进 prompt——**只有 POV 可达的那一侧进入 writer prompt，隐藏侧一律涂黑、永不具名**（不写"对方名+隐藏信息"，不写"他不知道的是……"）。writer 的信息差写法只从 POV 侧推导：谁在瞒→写回避动作，谁在追→写试探节奏；禁止从隐藏侧直接取材。
 
 **场景类型识别：** 分析每个场景的核心事件，识别场景类型（可选值：dialogue / fight / environment / inner-mono / transition / group-scene）。记录为列表，用于下一步加载场景方法论和叙事规则选择。
 

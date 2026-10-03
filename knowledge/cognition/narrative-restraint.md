@@ -47,6 +47,32 @@ from the cognitive state:
   fixation, memory, misunderstanding, or self-reassurance — never
   meaningless repetition as a humanity trick.
 
+## COGNITIVE_BEHAVIOR_AUTHENTICITY
+
+A human cognitive behavior (self-correction, irrelevant thought, memory
+slip, unfinished sentence, repetition, and every other entry in the
+"Motivated cognitive texture" list above) may appear ONLY when supported
+by the character's cognition: their cognitive profile, emotional state,
+attention, memory, social context, current goal, distraction load,
+personality, scene pressure, familiarity, or interpretation pattern.
+No cognitive support → no behavior. **Model cognition, not defects.**
+
+Explicitly PROHIBITED as random insertions:
+
+- typos and grammatical mistakes (production errors, not cognition);
+- arbitrary fragments that interrupt nothing and resume nothing;
+- random contradictions with no belief-conflict source;
+- random memory errors with no memory-model source;
+- random topic shifts with no attention-shift cause;
+- random repetition with no uncertainty / emotion / fixation cause;
+- random ambiguity with no genuine uncertainty behind it;
+- fake uncertainty ("perhaps", "maybe") with nothing actually uncertain.
+
+A defect is a writing artifact; a cognitive behavior is evidence of a
+mind. When a texture element appears, the cognitive state must name its
+cause — exactly as `agents/cognition-agent.md` §4 demands a stated cause
+for every included behavior.
+
 ## Narrative optimization control
 
 Actively avoid excessive optimization. Flag patterns such as: perfectly

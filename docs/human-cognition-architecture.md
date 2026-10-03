@@ -233,3 +233,65 @@ misses:
 No single layer is sufficient. The model's omniscience is a strong prior;
 it takes a pipeline of constraints — some deterministic, some advisory,
 all explicit — to hold a single human consciousness per scene.
+
+## 23. Why narrative distance is presentation, not epistemic access
+
+(To be precise about §8's shorthand: distance modulation never grants the
+narrator knowledge.) Narrative distance controls *presentation* distance —
+descriptive density, abstraction level, emotional rendering distance,
+sentence shape. It never controls *epistemic permissions*: what the POV
+knows, observes, or infers; which secrets are accessible; what future
+information is possessed. This distinction exists because the model's
+favorite failure under "distant" narration is a quiet permission upgrade:
+the cooler the diction, the more the prose starts stating other minds,
+hidden causes, and future significance as fact. The invariant
+(`CLOSED_POV_EPISTEMIC_INVARIANT`, in
+`knowledge/narrator-voice/distance-modulation.md`) holds the line: even at
+`narrative_distance=distant`, everything asserted must trace to the POV's
+own epistemic layers. Distance may compress a thought; it may never invent
+knowledge.
+
+## 24. Why sparse filter injection is 0–5 — a ceiling, not a quota
+
+§14 explains why injection is sparse. The hardening adds the second half:
+**5 is a ceiling, never a quota.** A quota invites manufacturing —
+prompt-crafter padding a scene with three load-bearing constraints and two
+decorative ones to "reach five", which the writer then obeys at the cost
+of rhythm and sense. The rule (`SPARSE_FILTER_RULE`, in
+`skills/prompt-crafting.md` Step 1.6) is: inject 0–5, inject only what
+materially changes how the scene is written, and if three constraints do
+the work, inject exactly three. Zero is legal. An under-constrained prompt
+is enforced downstream by validators and the reader; an over-constrained
+one corrupts the prose at the source, where no downstream stage can
+repair it.
+
+## 25. Why cognitive behaviors must be motivated, never decorated
+
+Restraint (§12) permits loose ends; the authenticity rule
+(`COGNITIVE_BEHAVIOR_AUTHENTICITY`, in
+`knowledge/cognition/narrative-restraint.md`) governs *texture*. A
+self-correction, an irrelevant thought, a memory slip, an unfinished
+sentence — each is allowed only when the cognitive state names its cause:
+attention, emotion, distraction, memory, social pressure, interpretation
+pattern. The prohibition list (typos, grammatical mistakes, arbitrary
+fragments, random contradictions, random memory errors, random topic
+shifts, random repetition, random ambiguity, fake uncertainty) exists
+because the fastest way to fake "human" is to sprinkle defects — and
+defects are exactly what a real consciousness does not produce. A mind
+produces errors *with causes*; a defect generator produces errors with
+none. "Model cognition, not defects" is the operational sentence:
+when a texture element appears, the cognitive state must name its cause,
+exactly as cognition-agent §4 demands.
+
+## 26. Why the benchmark philosophy is behavioral differentiation
+
+(The benchmark agent owns the benchmarks; this states the philosophy they
+are built to.) A cognition benchmark that scores style — "does this read
+like a human voice?" — rewards decoration: the same defect-sprinkling §25
+prohibits. The framework's benchmarks must score *behavioral
+differentiation*: given the same scene, do two different cognitive states
+produce observably different attention, interpretation, and restraint?
+Does the filter change what the narration is allowed to know? Stylistic
+decoration is cheap to imitate and easy to game; behavioral difference —
+what is noticed, what is hedged, what is left unsaid — is where the
+machinery either works or doesn't.
