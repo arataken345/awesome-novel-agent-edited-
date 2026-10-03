@@ -72,9 +72,12 @@ def test_find_semicolons_both_widths():
     check("ASCII/全角分号都检出", GR.find_semicolons("a;b；c") == [1, 3])
 
 
-def test_colon_dialogue_quote_exempt():
-    check("CJK 引语冒号豁免", GR.find_colons("他说：“走吧。”") == [])
-    check("ASCII 引语冒号豁免", GR.find_colons('She said: "Run."') == [])
+def test_colon_dialogue_quote_fails():
+    # Canonical rule is an unconditional prose colon ban
+    # (templates/settings/global-rules.md `no-colon-in-prose`): the former
+    # dialogue-attribution exemption was removed — attribution colons fail.
+    check("CJK 引语冒号判失败", GR.find_colons("他说：“走吧。”") == [2])
+    check("ASCII 引语冒号判失败", GR.find_colons('She said: "Run."') == [8])
     check("普通冒号仍检出", GR.find_colons("他说：时间到了。") == [2])
 
 
@@ -159,9 +162,9 @@ def test_cn_two_dialogues_fail():
     check("CN 一段两引语无说话人信号判失败", code == 1 and "对话" in out, (code, out[:200]))
 
 
-def test_cn_dialogue_colon_exempt():
-    code, _ = run_cn("他顿了顿——没接话。他说：“走吧。”门关上了。")
-    check("CN 引语冒号豁免（退出码 0）", code == 0, code)
+def test_cn_dialogue_colon_fails():
+    code, out = run_cn("他顿了顿——没接话。他说：“走吧。”门关上了。")
+    check("CN 引语冒号判失败（退出码 1）", code == 1 and "冒号" in out, (code, out[:200]))
 
 
 def test_cn_prose_only_scoping():
@@ -222,7 +225,7 @@ if __name__ == "__main__":
     test_mask_preserves_layout()
     test_mask_multiline_html_comment()
     test_find_semicolons_both_widths()
-    test_colon_dialogue_quote_exempt()
+    test_colon_dialogue_quote_fails()
     test_en_colon_fails()
     test_en_semicolon_fails()
     test_en_valid_dialogue_passes()
@@ -233,7 +236,7 @@ if __name__ == "__main__":
     test_cn_semicolon_fails_both_widths()
     test_cn_valid_dialogue_passes()
     test_cn_two_dialogues_fail()
-    test_cn_dialogue_colon_exempt()
+    test_cn_dialogue_colon_fails()
     test_cn_prose_only_scoping()
     test_cn_em_dash_warning_only()
     test_corpus_counts_and_warns()

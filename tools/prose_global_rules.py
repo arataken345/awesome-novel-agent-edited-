@@ -20,7 +20,14 @@ and HTML tags while preserving character positions and newlines, so
 colons/semicolons in code or metadata never fail.
 
 A colon that directly introduces quoted dialogue (他说：“……”, She said: "…")
-is dialogue-unit framing (rule §4), not prose — exempt in both languages.
+is still prose, not an exception: the canonical rule
+(templates/settings/global-rules.md `no-colon-in-prose`, user-explicit,
+hard; knowledge/global-rules/default-rules.md §2) states an
+unconditional ban — "No colons (:) in novel prose." No canonical
+document authorizes a dialogue-attribution carve-out, and
+knowledge/global-rules/README.md forbids inferred overrides. Writers
+must recast attribution without a colon (comma, period, or bare
+dialogue).
 
 Usage: import prose_global_rules (library module, no CLI).
 Exit codes: n/a.
@@ -68,9 +75,10 @@ def mask_non_prose(text: str) -> str:
 
 # ---------------------------------------------------------------- hard rules
 
-# A colon that directly introduces quoted dialogue is dialogue-unit
-# framing (global rule §4), not prose — exempt in both languages.
-COLON_RE = re.compile(r"[:：](?!\s*[\"“])")
+# The colon ban is unconditional per the canonical rule
+# (templates/settings/global-rules.md `no-colon-in-prose`, user-explicit
+# hard): no dialogue-attribution exception. Any ":" / "：" in prose fails.
+COLON_RE = re.compile(r"[:：]")
 SEMICOLON_RE = re.compile(r"[;；]")
 
 
