@@ -1,0 +1,235 @@
+# Human-Cognition Architecture
+
+Why the framework models character cognition, assembles per-scene POV
+filters, and enforces global writing rules — and why each piece exists in
+the form it does.
+
+## 1. The core problem
+
+A large language model generates from statistical plausibility over its
+whole context. Given a chapter outline, it naturally produces prose in
+which the narrator knows everything relevant, every character articulates
+feelings with equal precision, every observation pays off, and every
+motivation is stated. This is **omniscient-model prose**: fluent, correct,
+and inhuman. The pipeline's entire cognition layer exists to answer one
+question per sentence: *who could know this, and how would they know it?*
+
+## 2. Why 11 epistemic layers instead of "knows / doesn't know"
+
+Binary knowledge tracking fails because human knowledge is graded: things
+known as fact, things reasonably inferred, things merely guessed, things
+actively avoided, things genuinely absent. The 11-layer lattice
+(FACT → UNKNOWN, in `knowledge/cognition/epistemic-layers.md`) exists so
+the writer can be told precisely *how* a detail may appear — directly
+stated, hedged, or not at all — instead of guessing. The HEDGED layer is
+the most important: it is where human prose lives ("she seemed tired",
+"he took that as agreement"), and the validators deliberately never flag
+hedged perception.
+
+## 3. Why information asymmetry is a first-class object
+
+Most plot interest comes from characters knowing different things. The
+per-scene knowledge lattice (reader / POV / others / hidden) is tracked
+explicitly because the model's default is to collapse it: it will hand
+the POV character knowledge that belongs to the reader or the hidden
+column whenever that makes the paragraph read more smoothly. Explicit
+asymmetry tracking makes the smooth wrong choice visible.
+
+## 4. Why an attention model (and not just "describe the scene")
+
+Models describe what is story-important. Humans notice what is
+salient *to them*: the exit if they are anxious, the smell if they are a
+cook, the rival's hands if they are jealous. The attention model
+(PRIMARY → ACTIVELY_AVOIDED) exists because `story_importance` and
+`character_salience` are different axes, and the default generation
+collapses them into one. "Never expand by story importance alone" is the
+operational sentence.
+
+## 5. Why blindness is modeled, not just knowledge
+
+A character is defined as much by what they systematically do not see as
+by what they know. Blind spots (self-flattering interpretations, topics
+actively avoided, questions never asked) are first-class because the
+model's instinct is therapeutic clarity: it heals blind spots by having
+characters notice them. A modeled blind spot is a constraint the writer
+must not violate; an unmodeled one is invisible and gets violated by
+default.
+
+## 6. Why memory has 9 fidelity levels
+
+Humans remember semantics, not transcripts; they remember gist, emotional
+residues, and wrong details with high confidence. A model given a story
+bible will quote it verbatim in characters' heads. The 9 fidelity levels
+exist to license *wrongness*: a character may misremember, and the
+misremembering must be the one the writer uses. STORY MEMORY (canon, exact)
+and CHARACTER MEMORY (lossy, personal) are stored separately for exactly
+this reason.
+
+## 7. Why interpretation is modeled separately from perception
+
+Two characters can perceive the same event and interpret it oppositely.
+The interpretation-error model exists because the model's default is
+correct interpretation: the narrator quietly adopts the interpretation
+that the plot needs. Modeling each character's interpretation system —
+and its characteristic errors — forces the prose to commit to a possibly
+wrong reading and stay in it.
+
+## 8. Why self-blindness is a feature, not a bug
+
+Characters do not see themselves clearly, and do not narrate themselves
+clearly. The model loves psychology-telling ("he realized his fear of
+abandonment made him cling"). The self-blindness model exists to keep
+the narration at the character's actual level of self-knowledge — which
+is usually lower than the reader's. The narrator may know more than the
+character only through distance modulation (§74–75), never through the
+character's own mouth.
+
+## 9. Why emotional self-awareness has levels
+
+"She was angry" is one of dozens of possible renderings, and the right
+one depends on the character's awareness level: bodily-only (jaw
+tightens), vague (something is off), mislabeled (calls fear "annoyance"),
+recognized (names it), denied (rationalizes it away). The filter's
+EMOTIONAL_FRAMING honors the level because upgrading awareness is the
+model's favorite shortcut to "depth" — and it reads as mechanical.
+
+## 10. Why wrong beliefs are protected
+
+A character's wrong belief is plot fuel and human texture. The model's
+instinct is to correct it — through narration, through another
+character's timely exposition, through the sheer pressure of coherence.
+Dead-ends are modeled and protected because premature correction is one
+of the most reliable signatures of AI prose. The registry records them;
+the filter forbids explaining them away.
+
+## 11. Why social cognition gets its own model
+
+People model other people constantly, badly, and strategically:
+guardedness, evasion, face-saving, status calculation. The social model
+(SPECIALTY / JURISDICTION / GUARDEDNESS / EVASION, plus narrator color)
+exists because dialogue between model-generated characters defaults to
+cooperative information exchange — everyone answering the question asked.
+Humans deflect, perform, and misunderstand on purpose.
+
+## 12. Why narrative restraint is a system, not taste
+
+Theme blindness (characters don't see the theme), dead-ends, non-closure,
+optimization control — these are not stylistic preferences but structural
+defenses against the model's optimization pressure: it optimizes for
+reader comprehension, thematic clarity, and satisfying arcs. Restraint
+exists to let the prose be worse at explaining and better at being human.
+Non-closure is explicitly permitted; the unresolved registry exists so
+threads can stay open without being lost.
+
+## 13. Why a deterministic POV filter (16 fields)
+
+The filter (`knowledge/narrator-voice/filter-spec.md`, §45) is a contract
+between the planner's knowledge and the writer's prose. It is 16 fields
+because those are the decisions a writer needs per scene: what to
+notice, what to ignore, what not to explain, what the character thinks
+things mean, what they don't know, emotional framing, density, distance.
+It is deterministic (`tools/pov_filter.py build_filter`) because the same
+profile + state must always produce the same filter — an LLM re-deriving
+it each time would drift.
+
+## 14. Why the filter is injected sparsely (≤5 constraints)
+
+A prompt stuffed with 16 fields of constraints produces prose that
+obeys the letter and murders the rhythm. Sparse injection exists because
+constraints have a cost: every injected rule narrows the writer's
+freedom, and past ~5 the prose starts sounding like it is checking boxes
+— which is itself an AI tell. Inject the load-bearing constraints only;
+the rest is enforced downstream by validators and the reader.
+
+## 15. Why the writer's context is quarantined
+
+The writer reads only the writing order, the prompt, and the genre
+setting — never the full cognitive state, never the canon. This is
+deliberate: if the writer can see the hidden column of the knowledge
+lattice, it will leak. The pipeline is designed so that *not knowing* is
+structural, not a matter of the writer's discipline. Prompt-crafter
+injects only the current scene's POV filter; other scenes' cognition is
+simply absent from context.
+
+## 16. Why global rules are hard/soft, not all-or-nothing
+
+Some user rules are identity (no colons, no semicolons — deterministic
+failures). Some are tendencies (em-dash rarity — corpus-level warnings).
+Treating a tendency as a ban produces mechanical avoidance prose; treating
+a ban as a tendency produces drift. The hard/soft distinction exists
+because the enforcement mechanism must match the rule's nature, and
+because only explicit user statements change a rule's strength — never
+corpus statistics, never agent convenience.
+
+## 17. Why rule precedence is deterministic (§48/§54)
+
+When rules conflict, someone must win, and "the model decides" is not an
+answer. The 9-level hierarchy with explicit-narrower-scope-wins exists so
+conflicts resolve the same way every time, and so that no lower rule can
+silently override a higher one. The critical invariant: overrides are
+never inferred. A chapter that happens to use colons is not an override;
+only an explicit user statement is.
+
+## 18. Why validators are prose-only by construction
+
+Global rules apply to novel prose — never to code, config, JSON, prompts,
+or docs. The checker masks non-prose content before validating because a
+colon in a URL failing a prose check would train everyone to ignore the
+checker. A validator that cries wolf about non-prose gets disabled; a
+disabled validator is worse than none, because then the real violations
+pass silently.
+
+## 19. Why the reader audits but never judges
+
+The reader has the 15-flag humanity taxonomy (H1–H15) and no pass/fail
+power. This separation exists because judgment corrupts observation: a
+reviewer who must deliver a verdict starts grading toward the verdict.
+The reader's job is to notice — "this paragraph reads like the narrator
+knows something the character couldn't" — and hand that noticing to the
+director, who decides. Advisory-only is a structural choice, not politeness.
+
+## 20. Why two new agents instead of extending old ones
+
+`cognition-agent` and `narrator-voice-agent` were created because no
+existing agent owns their responsibility: chapter-planner owns plot,
+prompt-crafter owns assembly, writer owns prose. Cognition modeling
+(building the per-scene knowledge lattice and cognitive profiles) and
+filter assembly (turning profile + state into the 16-field contract) are
+distinct skills with distinct inputs. Where a responsibility already
+existed — the reader's harsh review, anti-ai's machine screening, the
+updater's archive duties — the command extended rather than duplicated.
+
+## 21. Why the registries live with the updater
+
+Unresolved details and delayed meanings are discovered during writing but
+only *confirmed* at archive time, when the whole chapter exists. The
+updater owns the registry because it is the last agent to see the finished
+chapter, and because registration must never feed back into the writing
+prompt (that would create automatic foreshadowing — the registry's
+existence warping the prose toward telegraphing). One-way flow: writing →
+registry, never registry → prompt.
+
+## 22. How this prevents omniscient-model prose
+
+The mechanism is layered, and each layer catches what the previous one
+misses:
+
+1. **Cognition modeling** defines what the POV character can know, notice,
+   remember, and misinterpret — per scene, in 11 epistemic layers.
+2. **Filter assembly** turns that into 16 concrete constraints, assembled
+   deterministically so they don't drift.
+3. **Sparse injection** gives the writer only this scene's filter — the
+   writer's context is quarantined from canon, other scenes, and the
+   hidden column.
+4. **Global rules** constrain the prose's shape (punctuation, dialogue
+   architecture) deterministically; violations fail the build.
+5. **Anti-ai screening** runs the machine checks (both languages) plus the
+   Gate A–G review, with hedged perception explicitly protected.
+6. **Humanity audit** has the reader flag the 15 behavioral symptoms of
+   mechanical output — advisory, so observation stays honest.
+7. **The registry** keeps unresolved threads open without losing them and
+   without forcing payoff.
+
+No single layer is sufficient. The model's omniscience is a strong prior;
+it takes a pipeline of constraints — some deterministic, some advisory,
+all explicit — to hold a single human consciousness per scene.
