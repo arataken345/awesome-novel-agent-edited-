@@ -86,7 +86,11 @@ Omit fields that genuinely do not apply; never invent content to fill them.
   ask: *why would this character do/notice/remember/misunderstand/focus on
   this?* No character-specific reason → do not include it.
 - **No random humanization.** No random mistakes, distractions,
-  contradictions, repetitions, fragments, or memory failures.
+  contradictions, repetitions, fragments, memory failures, typos,
+  grammatical errors, topic shifts, ambiguity, or uncertainty that is not
+  genuinely unresolved. (See
+  `knowledge/cognition/narrative-restraint.md` §COGNITIVE_BEHAVIOR_AUTHENTICITY
+  for the full prohibit list.)
 - **Canon is authoritative.** STORY MEMORY ≠ CHARACTER MEMORY. A character
   may misremember; the timeline does not change. Never use cognitive
   imperfection to alter established facts.
