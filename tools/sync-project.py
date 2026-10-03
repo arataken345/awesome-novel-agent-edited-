@@ -546,7 +546,7 @@ def sync_knowledge(project_path: Path, platform: Platform, is_short=False) -> in
 def sync_tools(project_path: Path, platform: Platform) -> int:
     """同步正文检查脚本到 <平台>/tools/（源缺失则跳过，anti-ai 降级为模型肉眼）"""
     count = 0
-    for name in ("check-prose.py", "check-chapter.py"):
+    for name in ("check-prose.py", "check-chapter.py", "check-prose-en.py"):
         src = SKILL_HOME / "tools" / name
         if not src.exists():
             continue

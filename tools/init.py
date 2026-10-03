@@ -468,6 +468,7 @@ def deploy_tools(project_path: Path, platform: Platform):
     for name, missing_hint in (
         ("check-prose.py", "anti-ai 机器初筛将降级为模型肉眼"),
         ("check-chapter.py", "章节交付硬伤检查不可用"),
+        ("check-prose-en.py", "英文正文全局规则硬校验不可用"),
     ):
         src = SKILL_HOME / "tools" / name
         if not src.exists():
