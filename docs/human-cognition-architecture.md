@@ -378,3 +378,46 @@ It proves only that:
 «cognitively different POV conditions can survive the architecture into
 narrative realization without violating epistemic and structural
 constraints.»
+
+## 28. Why the tests are organized into four categories
+
+The suites below test different things, and conflating them produces
+false confidence (a contract test passing is not proof the behavior
+survives; a behavioral test passing is not proof the prose is human).
+Each category has a distinct verdict vocabulary, and none of them
+produces a "humanity score" — **no humanity score exists anywhere in
+this repository**, and **ADVISORY ≠ FAIL** (an ADVISORY is a flagged
+judgment call for a human, never a red gate).
+
+**CONTRACT tests** — data and architecture invariants. Deterministic,
+always run, fail hard. They assert what the machinery *must* do or
+never do, independent of any generated prose:
+closed-POV epistemic boundaries (`tools/test_cognition.py`),
+the closed-POV invariant plus the sparse-injection 0–5 ceiling plus
+prompt-level knowledge quarantine (`tools/test_cognition_hardening.py`),
+filter differentiation across POVs, and memory isolation — the
+state→filter→prompt memory links with no phantom injection
+(`tools/test_memory_path.py`).
+
+**BEHAVIORAL tests** — generated behavior, not invariants. They ask
+whether cognitive differences *survive* into artifacts: attention and
+interpretation differentiation across POVs, memory-uncertainty
+survival (degraded recall never restored to canon wording, hedges
+never upgraded — `tools/test_cognition_benchmark.py`, nine benchmarks
+reporting PASS / FAIL / ADVISORY with one sentence of evidence), and
+the cognitive-state→filter→prompt→realization chain
+(`tools/test_writer_behavioral.py` Level A: fully deterministic, no
+model, no network).
+
+**PRESERVATION tests** — downstream stages must not destroy what
+cognition built. The anti-AI pass and the reader-rewrite step are
+explicitly forbidden from stripping hedged perception or upgrading
+epistemic layers; the preservation suite (`tools/test_cognition_preservation.py`,
+added in this integration-hardening pass) guards those seams.
+
+**LIVE INTEGRATION tests** — a real model, optional, clearly marked.
+Level B of `tools/test_writer_behavioral.py` (`--model`) is the only
+live-model surface: opt-in, reports an honest SKIP when no model
+runtime exists, and is never part of CI. Nothing in this category may
+be required for a green build, and no prose is ever fabricated to
+pretend a live run happened.
