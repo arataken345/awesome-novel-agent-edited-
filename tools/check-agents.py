@@ -62,7 +62,7 @@ VALID_TOOLS = {
 # （review #47：首项被 `[a-z-]+\.md` 完全包含属冗余，已删）
 DEPLOYED_PATTERNS = [
     re.compile(r"^\.claude/knowledge/[a-z-]+\.md$"),          # 平铺产物（format-specs/anti-ai/genre-example/permanent-memory）
-    re.compile(r"^\.claude/knowledge/(plot-craft|scene-craft|character-craft|title-craft|style-distill)/"),
+    re.compile(r"^\.claude/knowledge/(plot-craft|scene-craft|character-craft|title-craft|style-distill|cognition|narrator-voice|global-rules)/"),
     re.compile(r"^\.claude/knowledge/(short-craft|short-genres)/"),  # 短篇知识目录（craft/genres 子目录拷贝）
     re.compile(r"^sandbox/(prose-regressions|locked-lines)\.txt$"),  # 项目沙箱资产（长短篇共用约定）
     re.compile(r"^stories/"),                                  # 短篇篇目目录（每篇一个子目录）

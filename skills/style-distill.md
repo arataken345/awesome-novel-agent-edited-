@@ -10,6 +10,7 @@
    - 量化表 → 卡量化维（案例 1 九维，schema 见 check-agents）
    - 建模规则 → 卡声音层（hard_constraints / soft_guidance / few_shot_examples）
 7. 写 `settings/writing-style.md`（收敛卡）+ `settings/style-profiles/analysis/general.md`（量化表 + 建模规则全文）。
+8. 文风规则化（见 `.claude/knowledge/global-rules/style-learning.md`）：样本中发现的**显式作者陈述**（"我从不用分号"）→ `settings/global-rules.md` 硬规则；**统计倾向**（em-dash 稀有）→ 软倾向。永不把统计倾向升级为硬规则。
 8. 备份旧卡到 `settings/.style-versions/v{N}_{YYYY-MM-DD}.md`（N=现有最大+1，卡与分析稿同版本）。
 9. confidence：LLM 按样本质量/一致性给 **1-100（必须 >0）**——0 仅用于未蒸馏/手动卡（走定性注入分支，见 prompt-crafting Step 1.1）；蒸馏卡置 0 会静默退回定性注入、丢失量化渲染。`last_updated` 写当日。
 10. **生成作者画像**（作者确认用，写入 `settings/style-profiles/analysis/general.md` 顶部「作者画像」节 + 交接报告）：

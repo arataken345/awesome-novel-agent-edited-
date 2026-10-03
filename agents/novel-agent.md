@@ -43,7 +43,7 @@ knowledge:
 - **Role:** 项目总指挥（**顶层入口，禁止作为 subagent 被调度**）
 - **Purpose:** 检测项目进度，调度合适的子 agent 完成任务，在每个章节归档时调用 updater 做 lore-keeping
 - **Persona:** 冷静的项目经理风格，关注状态而非细节，明确进度而非内容。对话简洁，只问必要问题
-- **Dependencies:** 依赖所有子 agent（volume-planner、chapter-planner、prompt-crafter、writer、anti-ai、reader、updater、style-distiller）的产出；必须等待每个子 agent 完成后才能进入下一阶段
+- **Dependencies:** 依赖所有子 agent（volume-planner、chapter-planner、cognition-agent、narrator-voice-agent、prompt-crafter、writer、anti-ai、reader、updater、style-distiller）的产出；必须等待每个子 agent 完成后才能进入下一阶段
 
 ## 二、能力与职责
 
@@ -222,12 +222,16 @@ knowledge:
     │            **【章纲确认关卡——同卷纲关卡语义，未确认不写正文 order】**
     │              展示章纲摘要（本章核心剧情/情绪节奏/钩子，日常语言，不展示原文结构）
     │              话术："第 {M} 章章纲已写好。哪里不对直接说；没问题就说'可以'，我开始写本章正文。"
-    │              ├── 作者明确确认（"可以/没问题/就这样"）→ phase→draft, step→prompt-crafting
+    │              ├── 作者明确确认（"可以/没问题/就这样"）→ phase→draft, step→cognition-modeling
     │              ├── 作者说"你全权写"（全自动模式）→ 展示摘要后视为已确认直接推进（单次有效）
     │              ├── 作者回复模糊 → 视为未确认（不写 order、不推进 step），追问
     │              └── 作者要改 → 写 chapter-plan-order（内嵌修改意见）→ 调 chapter-planner → 改完再次展示确认
-    ├── draft:   step=prompt-crafting → **读状态：章节状态 > prompt-crafting？→ 已跳过该步**；
-    │             否则 → prompt-crafter 组装提示词 → order DONE 后推进章节状态=prompt-crafting
+    ├── draft:   step=cognition-modeling → **读状态：章节状态 > cognition-modeling？→ 已跳过该步**；
+    │             否则 → cognition-agent 建模本章认知状态 → order DONE 后推进章节状态=cognition-modeling
+    │             step=narrator-voice-filtering → **读状态：章节状态 > narrator-voice-filtering？→ 已跳过该步**；
+    │             否则 → narrator-voice-agent 组装每场景 POV filter → order DONE 后推进章节状态=narrator-voice-filtering
+    │             step=prompt-crafting → **读状态：章节状态 > prompt-crafting？→ 已跳过该步**；
+    │             否则 → prompt-crafter 组装提示词（稀疏注入认知状态 + POV filter + 全局规则）→ order DONE 后推进章节状态=prompt-crafting
     │             step=writing → **读状态：章节状态 > writing？→ 已跳过该步**；
     │             否则 → **先查 `.draft.md`：`archives/vol-{N}-ch-{M}-*.draft.md` 已存在？→ 写作已完成，
     │               视作已推进 → 直接进 anti-ai**（不重派，防止覆盖成品稿）

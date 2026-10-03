@@ -384,7 +384,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "claude")
         n = len(list((tmp / ".claude/agents").glob("*.md")))
-        check(f"claude agents 数量=9", n == 9, f"实际 {n}")  # agents/ 源有 9 个 .md（spec 契约）
+        check(f"claude agents 数量=11", n == 11, f"实际 {n}")  # agents/ 源有 11 个 .md（spec 契约：9 原生 + cognition-agent + narrator-voice-agent）
 
     # opencode agent 引用改写
     with tempfile.TemporaryDirectory() as td:
@@ -399,7 +399,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "codex")
         n = len(list((tmp / ".codex/agents").glob("*.toml")))
-        check("codex agents 数量=9", n == 9, f"实际 {n}")
+        check("codex agents 数量=11", n == 11, f"实际 {n}")
         w = (tmp / ".codex/agents/writer.toml").read_text(encoding="utf-8")
         check("codex writer TOML 字段",
               'name = "writer"' in w and "description" in w
@@ -493,7 +493,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "grok")
         n = len(list((tmp / ".grok/agents").glob("*.md")))
-        check("grok agents 数量=9", n == 9, f"实际 {n}")
+        check("grok agents 数量=11", n == 11, f"实际 {n}")
         w = (tmp / ".grok/agents/writer.md").read_text(encoding="utf-8")
         fm = w.split("---", 2)[1]
         fm_data = yaml.safe_load(fm)

@@ -355,3 +355,18 @@ Phase 4  报告   字数变化 + 修改统计 + 前后对比 + 机器复跑核�
 - **novel-agent** — 不用 Bash、不写内容文件、不越权代劳、绝不访问项目外路径
 - **设定写入** — settings/ 必须经 updater（setting-update 模式），novel-agent 不得直接写。例外：style-distiller 拥有 settings/writing-style.md、settings/style-profiles/、settings/.style-versions/ 专属写白名单，其余 settings 仍归 updater
 - **作家本地记录优先于 references defaults**
+
+## 7. 人类认知与叙事声音系统
+
+为对抗"全知模型腔"（LLM 默认的全知、正确、闭合叙述）而设的三层系统：
+
+- **cognition-agent**（认知建模）→ 每章产出 `.agent/cognition/vol-{N}-ch-{M}.md`：每场景 POV 认知档案（11 层认知层/注意力/记忆忠实度/解释误差/错误信念/死路）
+- **narrator-voice-agent**（叙事声音滤镜）→ 按 `tools/pov_filter.py build_filter` 装配 16 字段 POV filter（确定性脚本，同输入必同输出）
+- **prompt-crafter 稀疏注入** → 每场景只注入本场景 POV 的 filter（≤5 条约束）+ 全局硬规则；writer 上下文与 canon/他场景隔离
+
+全局写作规则（`knowledge/global-rules/`）：硬规则（冒号/分号禁止、对话段落架构，确定性失败）+ 软倾向（em-dash 稀有，语料级警告）；9 级优先级 `tools/pov_filter.py resolve_rule` 裁决，显式窄域覆盖优先、永不推断覆盖。
+
+- **reader 人性审计**：15 行为标志（H1–H15），只反馈不判决（读者永无通过/不通过权）
+- **updater 注册表**：`settings/unresolved-registry.md`，归档时登记未闭合线索；只进不出（永不回流进写作 prompt，防自动预示）
+
+详见 `docs/human-cognition-architecture.md`（22 个 WHY）。

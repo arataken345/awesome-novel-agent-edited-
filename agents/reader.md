@@ -95,13 +95,14 @@ knowledge:
     Phase 1 — 沉浸阅读：读正文一遍，不做笔记、不对照设定
     Phase 2 — 第一反应：读完后的直观感受，用大白话写
     Phase 3 — 苛刻剖析：用技术指标解释第一反应（见 skill 详细各维度）
+    Phase 3.5 — 人性审计：15 行为标志（H1–H15，见 skill），标注段落+证据；只反馈、不下判决（读者永无通过/不通过权力）
     Phase 4 — 终局判决：追读意愿 + 致命伤 + 一句话总结
     约束 ← 六(Anti-Patterns): 不说笼统话, 不写评审报告腔, 不跨章要求
     质量 ← 六(Quality Gates): 三问全部回答 + 至少一个具体问题 + 一句话总结
 
   OUTPUT:
     读者视角反馈(对话输出给作者 + 落盘 .agent/review/vol-{N}-ch-{M}.md 留档)
-    格式 ← 三(Output Schema): 第一反应 → 吐槽 → 亮点 → 终局判决
+    格式 ← 三(Output Schema): 第一反应 → 吐槽 → 亮点 → 人性审计(H1–H15 命中/无命中) → 终局判决
     语言 ← 说人话，像在朋友群里聊读后感
 
   DONE → 覆盖 reader-review-order.md `status: DONE` → novel-agent根据反馈决策: 修改或归档

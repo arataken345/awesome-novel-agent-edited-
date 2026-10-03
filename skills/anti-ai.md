@@ -132,6 +132,14 @@ python3 .claude/tools/check-prose.py archives/vol-{N}-ch-{M}-{slug}.draft.md
 python3 .claude/tools/check-chapter.py archives/vol-{N}-ch-{M}-{slug}.draft.md
 ```
 
+English manuscripts: run `check-prose-en.py` instead of `check-prose.py`
+(it enforces the deterministic global rules — colon/semicolon bans,
+dialogue paragraph architecture — plus AI-tell warnings; exit 0/1/2).
+Language selection: order-specified, or CJK character ratio < 5% → English.
+`check-chapter.py` runs for both languages.
+The deterministic subset mirrors `.claude/knowledge/global-rules/default-rules.md`
+(hard rules = failures, soft tendencies = warnings only).
+
 （Windows 无 `python3` 时改用 `python` 或 `py`，下同）
 
 两个脚本分工：check-prose 管 AI 味统计形态；check-chapter 管章节交付硬伤（引语夹层、嵌套/半角引号、字数逐字对账、回归串等，项目级回归库与白名单在 `sandbox/`）。结果各档独立判定：

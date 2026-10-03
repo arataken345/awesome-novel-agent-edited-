@@ -175,6 +175,18 @@
 
 数据来源：读 `.agent/review/vol-{N}-ch-{M}.md`（reader 评审留档）的终局判决与 AI 味维度，或从 anti-ai.md 的 Phase 4 报告提取。如两者都无，则跳过不自行计算。
 
+### Step 6.6: 注册表维护（unresolved-registry）
+
+归档时更新 `settings/unresolved-registry.md`（见 `.claude/knowledge/cognition/registries.md`）：
+
+1. **收集来源**：`.agent/cognition/vol-{N}-ch-{M}.md`（认知档案中的死路/未闭合条目）+ `.agent/review/vol-{N}-ch-{M}.md`（读者反馈中的未解线索）+ 本章正文（POV 注意到但未解释的细节、未回答的问题、含义不明的事件）
+2. **登记规则**：
+   - 记录"什么/出现在哪/谁的认知持有/当前状态"，不多写
+   - **不自动闭合**：已登记条目不得在后续叙述中被悄悄解释掉
+   - **不强制兑现**：登记不是承诺，条目可永远悬置；禁止把注册表变成情节必须还的清单
+   - planner 级的 `confirmed_significance`（该伏笔确实重要）**永不写入写作 prompt**——这是防自动预示的铁律
+3. **作者专属**：只有作者可显式退役条目；agent 不删除条目
+
 ### Step 7: 动态记忆合并（分类写入）
 
 将 Step 6 收集的反馈分三类处理：
