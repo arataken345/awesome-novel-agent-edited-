@@ -73,6 +73,9 @@ knowledge:
   - `settings/character-setting/` → 本章涉及的角色设定（角色初始状态 + 叙事规则关联推导）
   - `.claude/knowledge/anti-ai.md` → 反 AI 规则
   - `.claude/knowledge/genre-example.md` → 题材提示词注入段（输出·写作规范用；init.py 按题材合并为单一文件）
+  - `.agent/cognition/vol-{N}-ch-{M}.md` → 本章认知状态（cognition-agent 产物）：每场景 POV 认知剖面（认知层/注意力/错误信念/解释误差）；缺失则在完成报告标注并要求先跑 cognition-agent
+  - 场景 POV 角色的 narrator voice profile（filter-spec 16 字段）→ 组装 POV filter
+  - `settings/global-rules.md` → 全局写作规则：硬规则（no-colon/no-semicolon/one-dialogue-per-paragraph）并入输出·不可违反规则，em-dash 稀有倾向注入背景信息；规则冲突按 §48 优先级 + §54 显式窄域覆盖裁决
 - **Output Artifacts:**
   - `prompts/vol-{N}-ch-{M}-prompt.md` → 6 元素提示词
 - **Hand-off Protocol:** 写入 prompt.md 后，将 `.agent/task/prompt-craft-order.md` 覆盖为 `status: DONE`（不删除文件）后结束；novel-agent 检测到 DONE 即确认完成

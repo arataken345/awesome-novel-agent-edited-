@@ -25,6 +25,8 @@ Step 4: 验收自检
 8. **永久记忆**（`.claude/knowledge/permanent-memory.md`）→ 提取高频沉淀的作者规则，与写作记忆合并去重后注入
 9. **style-profiles/ 场景卡** → 本章每个场景类型查 `settings/style-profiles/{scene_type}.md`，有则把该卡 override 合并进主卡量化层（仅该场景注入用，confidence>0 渲染即按此 override 叠加）；无则主卡兜底。**合并为 LLM 手工执行，无脚本校验（review #34）——合并后按 Step 4 验收自检核对数值口径（0-100 百分数、非负），异常即回查源卡**
 10. **提示词记忆**（`.claude/memory/prompt-memory.md`）→ 提取与本章提示词组装/冲突裁定/校验相关的作者反馈条目，在 Step 2 填充与 Step 3 冲突检测时应用；引用后按 skills/memory-recording.md §4.1 递增 use_count
+11. **本章认知状态**（`.agent/cognition/vol-{N}-ch-{M}.md`，cognition-agent 产物）→ 提取每场景的 POV 角色认知剖面（11 层认知层标注、注意力排序、错误信念/死路、解释模型、解释误差）；缺失时提示 novel-agent 先跑 cognition-agent
+12. **全局写作规则**（`settings/global-rules.md`）→ 提取硬规则（colon/semicolon 禁止、对话段落架构）与软倾向（em-dash 稀有）；硬规则并入 Step 1.5 优先级 1（约束红线），软倾向并入背景信息·作者偏好记忆
 **注意：前情上下文只读上一章章纲（chapters/vol-{N}-ch-{M-1}.md）的 emotional_design 与 required_changes，不读上一章正文全文；archives/ 始终禁止读取。**
 
 **占位符守卫：** 若 `settings/writing-style.md` / `settings/genre-setting.md` 仍含未替换的 `{...}` 占位符（如 `{role}`、`{genre_id}`，即初始化后设定阶段未执行），**禁止把占位符原样注入 prompt**。改为从 `.claude/knowledge/genre-example.md` 提取对应题材的「叙事者角色/文风蓝图/类型禁忌/题材配置」作为默认风格注入，并在完成报告标注 `[设定未填写，已用 genre-example 默认兜底]`，提示 novel-agent 补做设定。
@@ -71,6 +73,17 @@ Step 4: 验收自检
 | 字数压缩·低权重场景压缩 | 场景权重标注为"低"，且内容不属于红线关键信息 | 场景权重为"低"但承载了红线关键信息（如低权重场景中出现了关键伏笔） |
 | 感官例外·声音线索 | 声音是红线关键信息且以简短白描形式呈现（"门开了"三字） | 声音是大段环境描写（200字的风声/脚步声细节）或非红线信息 |
 | 认知动词替换 | 认知动词可用外部动作或直接感知替代（"他感到害怕"→"他的手指用力扣进掌心"） | 关键情绪节点外一律替换（≤2次/章，见 narrative-rules.md 规则 2），不因字数或其他规则让步——字数超限时走压缩策略（优先压缩低权重场景，见全局冲突裁定表"认知动词 vs 字数"裁定） |
+
+## Step 1.6: 认知状态与叙事滤镜注入（稀疏注入）
+
+目标：让 writer 以场景 POV 角色的**人类认知**写作，而非全知叙述。
+
+1. **读取**：`.agent/cognition/vol-{N}-ch-{M}.md`（认知状态）+ 角色的 narrator voice profile（filter-spec 16 字段）
+2. **每场景装配一个 POV filter**（`tools/pov_filter.py build_filter` 语义）
+3. **稀疏注入**：prompt 场景段只注入该场景 POV 的 filter + 认知档案摘要——注意力排序（高认知/低认知细节清单）、认知层（KNOWN/FACT 可自由叙述；HEDGED 层用情态/推断标记表达；UNKNOWN/ABSENT 层禁止表现；DELIBERATE_GAP 层禁止主动填补）、错误信念与死路（只表现行为，不解释）、解释误差（该角色系统的解释与他人的差异）
+4. **注入纪律**：每场景最多 5 条 filter 约束；只注入本章**本场景 POV** 的 cognition/filter，全章档案/他场景 POV 不注入（writer 按"读什么"纪律只读 order+prompt+设定，不读 cognition 全文）
+5. **全局硬规则**（no-colon/no-semicolon/one-dialogue-per-paragraph）注入为不可违反规则，写入"输出·不可违反规则"；em-dash 稀有倾向注入为"本章建议"
+6. **规则冲突**：filter/认知档案与上层规则冲突时按 §48 优先级裁决（用户显式命令 > user_global > project_canon > chapter > scene > character > observed_style > agent_default > model_default），显式窄域覆盖优先；禁止推断覆盖
 
 ## Step 2: 按 6 元素 Prompt 结构填充
 
