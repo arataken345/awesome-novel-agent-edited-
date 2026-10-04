@@ -9,13 +9,13 @@
 
 ## 触发与输入
 
-novel-agent 写 `detect-loop-order.md` 调 anti-ai agent 执行（本 skill 是 anti-ai 的支线 SOP）。order inputs：
+novel-agent 写 `detect-loop-order.md` 调 humanizer agent 执行（本 skill 是 humanizer 的支线 SOP）。order inputs：
 
 ```markdown
 # detect-loop-order
 status: pending
 inputs:
-  - 稿件路径（默认 archives/ 当前章 .anti-ai.md 的正文，或作者指定文件）
+  - 稿件路径（默认 archives/ 当前章 .humanizer.md 的正文，或作者指定文件）
   - 送检方式：本地工具命令（作者自备，可空）/ 作者手动送检
   - 结果文件路径（送检产出；作者手动送检时为作者粘贴的结果文件）
   - 达标线（默认 0.5，按检测工具口径调整）
@@ -52,7 +52,7 @@ outputs 里不含检测工具本身。
 
 1. **只修一个最高分片段**：取 score 最高的片段；多个同分取靠前者。其余片段**字符级不动**（修改前后对该片段做内容哈希比对验证）。
 2. **边界稳定**：片段首句、末句逐字保持原样；改幅等长优先（±3% 内）；用片段 text 在稿件中定位内容子串，不按行号猜。
-3. **修法顺序**：先对照 `.claude/knowledge/anti-ai.md`「结构热源定律」判结构类型——先改结构（换内容类型/砍问答拍/拆微闭环/删意义确认），句子级清理在后。
+3. **修法顺序**：先对照 `.claude/knowledge/humanizer.md`「结构热源定律」判结构类型——先改结构（换内容类型/砍问答拍/拆微闭环/删意义确认），句子级清理在后。
 4. **裁决顺序**：作者设定与章纲 > 题材知识 > 结构默认值 > 检测优化。降分修改**不得**改写锁定台词、章纲落点等作者侧核心表达；冲突时保留作者侧表达，报告标注"设定优先、接受残分"或提交作者裁决。
 5. **止损**：同片段连续两轮改善不足 0.05 或分数反升 → 停止同类改法，下一轮换内容类型或回滚上一版（作者说"不如刚才/适得其反"→ 立即回滚）。
 6. **每轮前后**：修改后同轮复跑 `check-chapter.py`（exit=0 才送检）；每轮结果追加进 `sandbox/detect-battles.md`（轮次/改动/逐片结果/结论）。

@@ -35,7 +35,7 @@ perfect optimization.
    from how the character speaks).
 4. **Global writing rules** (`knowledge/global-rules/`) — the user's persistent
    prose style: punctuation, paragraph architecture, rule hierarchy.
-5. **Anti-AI / humanity audit** (`knowledge/anti-ai/` + reader) — evaluates
+5. **Humanizer / humanity audit** (`knowledge/humanizer/` + reader) — evaluates
    whether the output still feels mechanically optimized. Auditing is
    downstream of creation; it never generates cognition.
 
@@ -62,7 +62,7 @@ perfect optimization.
    injection**: only the active POV, relevant memories/beliefs, current
    attention/emotion/concerns, relevant blind spots and associations, and the
    applicable global rules. Never the whole profile.
-4. `writer` writes from the prompt. `anti-ai` cleans expression. `reader`
+4. `writer` writes from the prompt. `humanizer` cleans expression. `reader`
    (extended with the humanity flag taxonomy) audits situatedness.
 
 ## Language note

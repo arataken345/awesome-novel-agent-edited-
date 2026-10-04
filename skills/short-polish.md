@@ -1,6 +1,6 @@
 # short-polish SOP — 去 AI 味与精修
 
-> short-editor 执行。只改表达不改剧情；短篇口径（`.claude/knowledge/short-anti-ai.md`）是唯一判定依据。
+> short-editor 执行。只改表达不改剧情；短篇口径（`.claude/knowledge/short-humanizer.md`）是唯一判定依据。
 
 ## Step 1: 留删对表逐段判定
 

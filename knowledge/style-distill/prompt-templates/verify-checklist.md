@@ -1,4 +1,4 @@
-# 案例 2 验收检查清单（anti-ai 用，替代旧 Gate G / distill-style.py check）
+# 案例 2 验收检查清单（humanizer 用，替代旧 Gate G / distill-style.py check）
 
 ## 触发
 对每章正文跑指令遵循验收：读同章 `prompts/vol-{N}-ch-{M}-prompt.md` 的
@@ -13,7 +13,7 @@
    锚点（章首/章尾语义闭环）逐条判定。
 4. 软引导条：整体基调是否吻合。
 
-## 违反报告格式（写入 archives/*.anti-ai.md 验收节）
+## 违反报告格式（写入 archives/*.humanizer.md 验收节）
 | 条号 | 原文要求 | 正文表现 | 违反与否 | 建议 |
 结论：PASS / FAIL（违反条数 / 总条数）
 
