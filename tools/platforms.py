@@ -166,7 +166,7 @@ _REASONIX_TOOL_MAP = {
 # （新增执行 agent 只改这里 + EXEC_AGENT_SOPS，无需逐平台改文案）
 SUBAGENT_NAMES = (
     "writer", "volume-planner", "chapter-planner", "prompt-crafter",
-    "anti-ai", "reader", "updater", "style-distiller",
+    "humanizer", "reader", "updater", "style-distiller",
 )
 
 # 短篇流水线：调度者 short-agent + 短篇子 agent 组（reader 长短共用）
@@ -184,7 +184,7 @@ DISPATCHER_AGENTS = {
 # 长篇专属 agent（短篇项目不部署；reader 为长短共用，不在其列）
 LONG_ONLY_AGENTS = frozenset({
     "novel-agent", "writer", "volume-planner", "chapter-planner",
-    "prompt-crafter", "anti-ai", "updater", "style-distiller",
+    "prompt-crafter", "humanizer", "updater", "style-distiller",
 })
 
 # agent → 专属 SOP 映射单源（三平台 deploy 与 Codex SOP 内联共用此契约）
@@ -193,7 +193,7 @@ EXEC_AGENT_SOPS = {
     "volume-planner": ["volume-arc", "volume-direction", "volume-writing"],
     "chapter-planner": ["chapter-reference", "chapter-outline", "chapter-verify"],
     "prompt-crafter": ["prompt-crafting", "prompt-audit"],
-    "anti-ai": ["anti-ai"],
+    "humanizer": ["humanizer"],
     "reader": ["reader-review"],
     "updater": ["updater-archive", "updater-setting", "updater-rollback"],
     "style-distiller": ["style-distill"],
