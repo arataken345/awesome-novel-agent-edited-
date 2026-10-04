@@ -167,7 +167,7 @@ novel-agent（总指挥 — 顶层入口，由 @novel-agent 加载）
   ├─ setup 阶段 → 调度 updater（设定写入）
   ├─ outline 阶段 → 调度 volume-planner（卷纲）→ chapter-planner（章纲）
   ├─ draft 阶段 → 调度 prompt-crafter（提示词）→ writer（正文）
-  ├─ anti-ai 阶段 → 调度 anti-ai（去 AI 味）
+  ├─ humanizer 阶段 → 调度 humanizer（去 AI 味）
   ├─ review 阶段 → 调度 reader（深度评审，可选）
   └─ archive 阶段 → 调度 updater（归档 + lore-keeping）
 ```
@@ -270,7 +270,7 @@ novel-agent 只负责调度和验证，不直接写内容。子 agent 各司其�
 | **① 章纲** | chapter-planner | （由 novel-agent 调度）继承卷的情绪走向/冲突阶梯/信息差位置，设计章内微弧线、小冲突阶梯和信息差动态变化，拆成场景卡。你看完后说"可以"或"改一下" |
 | **② 提示词** | prompt-crafter | （由 novel-agent 调度）根据章纲、反 AI 规则和文风偏好，组装 6 元素纯净提示词 |
 | **③ 写正文** | writer | （由 novel-agent 调度）按提示词写完整一章 |
-| **④ 去 AI 味** | anti-ai | （由 novel-agent 调度）Gate A-F 管线检测清除 AI 痕迹，量化评分定级 |
+| **④ 去 AI 味** | humanizer | （由 novel-agent 调度）Gate A-F 管线检测清除 AI 痕迹，量化评分定级 |
 | **⑤ 审阅** | reader（可选） | （由 novel-agent 调度）10 维 60+ 细项深度评审，对照章纲/设定/前文逐条诊断 |
 | **⑥ 归档** | updater | （由 novel-agent 调度）你确认后归档定稿，自动更新角色状态、追加情绪弧线、合并文风偏好、检测钩子健康和卷边界 |
 
@@ -281,7 +281,7 @@ novel-agent 只负责调度和验证，不直接写内容。子 agent 各司其�
 ### 自动做的事（Agent 维护）
 
 - **蒸馏文风**（style-distiller）：导入参考样本或利用已归档章节，自动提炼量化文风参数（句长/对话占比/形容词密度等），写入风格主卡与场景卡并按场景稀疏注入提示词；归档后增量校准，越写越贴合你的风格
-- **去 AI 味**（prompt-crafter + writer + anti-ai）：提示词组装时注入反 AI 规则，正文生成时自查，独立 anti-ai agent 做 Gate A-F 管线检测和量化评分定级
+- **去 AI 味**（prompt-crafter + writer + humanizer）：提示词组装时注入反 AI 规则，正文生成时自查，独立 humanizer agent 做 Gate A-F 管线检测和量化评分定级
 - **动态记忆**（多 agent + updater）：各 agent 在对话中实时记录你的写作偏好和反馈（正反案例），归档时 updater 兜底清理、去重压缩。高频使用的规则自动晋升为永久记忆（`.claude/knowledge/permanent-memory.md`），越写越懂你
 - **记伏笔**（updater）：归档时自动扫描未兑现/新埋的钩子，检测陈旧度和集中收束风险
 - **管角色状态**（updater）：每章归档后自动追加角色状态历史、情绪弧线和人际关系变化。下一章写作时 Agent 知道最新状态
@@ -365,7 +365,7 @@ novel-agent 只负责调度和验证，不直接写内容。子 agent 各司其�
 
 如果你是有创作经验的作家，欢迎为反AI写作库贡献题材正反例：
 
-**贡献内容：** `knowledge/anti-ai/{genre}.md` — 你所在题材的高频AI病句正反例
+**贡献内容：** `knowledge/humanizer/{genre}.md` — 你所在题材的高频AI病句正反例
 
 **贡献格式：**
 ```markdown
@@ -392,10 +392,10 @@ novel-agent 只负责调度和验证，不直接写内容。子 agent 各司其�
 
 **提交方式：**
 1. Fork 项目
-2. 在 `knowledge/anti-ai/` 下新建或编辑题材文件
+2. 在 `knowledge/humanizer/` 下新建或编辑题材文件
 3. 提交 PR，标题格式：`反AI: 添加{题材名}正反例`
 
-见 [knowledge/anti-ai/README.md](./knowledge/anti-ai/README.md)。
+见 [knowledge/humanizer/README.md](./knowledge/humanizer/README.md)。
 
 ### 代码贡献（程序员）
 
@@ -408,7 +408,7 @@ awesome-novel-agent/
 │   ├── chapter-planner.md# 场景设计师
 │   ├── prompt-crafter.md# 提示词工程师
 │   ├── writer.md        # 写手
-│   ├── anti-ai.md       # 反 AI 编辑
+│   ├── humanizer.md     # humanizer 编辑
 │   ├── reader.md        # 测试读者
 │   ├── updater.md       # 档案管理员
 │   └── style-distiller.md# 风格蒸馏师
@@ -421,7 +421,7 @@ awesome-novel-agent/
 │   ├── title-craft/     # 取书名（与作者讨论）
 │   ├── style-distill/   # 风格蒸馏（prompt-templates：渲染/验收/特征提取）
 │   ├── genre-example/   # 题材案例
-│   └── anti-ai/         # 反AI写作库（通用规则 + 题材正反例）
+│   └── humanizer/       # 反AI写作库（通用规则 + 题材正反例）
 └── tools/                # 工具脚本
 ```
 
@@ -471,7 +471,7 @@ OpenCode 项目与 Claude Code 项目结构一致，唯一区别是 agent 定义
 | 场景写法 | `knowledge/scene-craft/` | 新增/改进场景写作方法论（四步转化后注入输出·写作规范） |
 | 剧情设计 | `knowledge/plot-craft/` | 新增/改进剧情设计方法论（与作者讨论） |
 | 角色设定 | `knowledge/character-craft/` | 新增/改进角色设定方法论 |
-| 反AI写作库 | `knowledge/anti-ai/` | 新增题材正反例、丰富通用规则及方法论 |
+| 反AI写作库 | `knowledge/humanizer/` | 新增题材正反例、丰富通用规则及方法论 |
 | 题材画像 | `knowledge/genre-example/` | 新增题材档案、丰富配置内容 |
 
 **贡献流程：**
