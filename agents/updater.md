@@ -23,7 +23,7 @@ knowledge:
     description: 角色设定目录
   - path: settings/timeline.md
     description: 时间线
-  - path: .claude/knowledge/anti-ai.md
+  - path: .claude/knowledge/humanizer.md
     description: 反 AI 模式库（静态规则，不在此写入语义合并）
   - path: .claude/knowledge/memory-format-spec.md
     description: 写作记忆格式规范（验证条目格式）
@@ -58,7 +58,7 @@ knowledge:
     - 更新 `settings/character-setting/*.md` → 追加角色本幕状态变化和情绪弧
     - 检测本章出现的新生物/怪物 → 追加到 `settings/world-setting.md`
     - 追加 `settings/timeline.md` → 追加本章关键事件
-    - 语义合并后追加 `.claude/knowledge/anti-ai.md` + 写作记忆（`.claude/memory/writing-memory.md`）
+    - 语义合并后追加 `.claude/knowledge/humanizer.md` + 写作记忆（`.claude/memory/writing-memory.md`）
     - AI 原版快照归档后保留（审计留档；靠 `.agent/archiving/{chapter}.done` 标记区分过期，不删除文件）
   - **设定变更流程**（setting-update-order.md → 加载 updater-setting）：
     - 新增角色（创建文件、ID 唯一性检查、关系同步）
@@ -77,7 +77,7 @@ knowledge:
   - 更新 `.agent/status.md` → 推进进度标记
   - 将 order 标记 `status: DONE` 通知完成
 - **Out of Scope:**
-  - 不编辑正文草稿与中间稿（`.draft.md`/`.anti-ai.md` 一字不改）；归档时仅 Write 生成定稿 `.md`（复制内容，不做内容编辑）
+  - 不编辑正文草稿与中间稿（`.draft.md`/`.humanizer.md` 一字不改）；归档时仅 Write 生成定稿 `.md`（复制内容，不做内容编辑）
   - 不做创作性决策（不判断好坏，只提取差异）
   - 不调度其他 agent
   - 不写 `.agent/status.md` 的 `phase` / `current_step` / `last_volume_completed`（由 novel-agent 写；updater 只推进归档/设定相关进度标记）
@@ -93,16 +93,16 @@ knowledge:
   - `.agent/task/setting-update-order.md` → 设定变更指令（inputs 指向源文件通知块或 content 内联 spec）
   - `.agent/task/memory-sweep-order.md` → 记忆兜底指令（inputs 指向 `.claude/memory/`）
   - `.agent/{chapter}-draft-ai.md` → AI 原版快照（归档 diff 基线）
-  - `archives/vol-{N}-ch-{M}-{slug}.md` → 定稿正文（diff 基线对比对象；内容 Write 自 `.anti-ai.md` 或 `.draft.md` 的复制）
+  - `archives/vol-{N}-ch-{M}-{slug}.md` → 定稿正文（diff 基线对比对象；内容 Write 自 `.humanizer.md` 或 `.draft.md` 的复制）
   - `chapters/vol-{N}-ch-{M}.md` → 章纲（status→archived 标记 + 章纲兑现核对）
   - `settings/` 全部文件 → 已有设定（角色/世界观/时间线等）
-  - `.claude/knowledge/anti-ai.md` → 已有反 AI 规则
+  - `.claude/knowledge/humanizer.md` → 已有反 AI 规则
   - `.claude/memory/writing-memory.md` → 已有文风偏好（作家反馈沉淀）
   - `.agent/status.md` → 当前进度标记
 - **Output Artifacts（归档流程）:**
   - `settings/character-setting/*.md` → 追加角色状态变化、情绪弧
   - `settings/timeline.md` → 追加本章关键事件
-  - `.claude/knowledge/anti-ai.md` → 追加语义合并后的反 AI 规则
+  - `.claude/knowledge/humanizer.md` → 追加语义合并后的反 AI 规则
   - `.claude/memory/writing-memory.md` → 追加语义合并后的文风偏好（作家反馈）
   - `settings/foreshadowing.md` → 追加/更新跨卷伏笔台账（从 chapter.md#payoff_plan 汇总）
   - `.agent/{chapter}-draft-ai.md` → 归档 diff 基线；归档后保留（审计留档）
@@ -186,10 +186,10 @@ knowledge:
   | 工具 | 允许 | 禁止 |
   |------|------|------|
   | Read | `settings/`、`archives/`、`chapters/`、`volumes/`（读卷纲中的 `## 设定变更通知` 块）、`.claude/memory/`、`.claude/knowledge/`、`.agent/` | 不读 prompts/ |
-  | Write | `.agent/status.md`、`.agent/archiving/{chapter}.done`、`.agent/{chapter}-draft-ai.md`（创建 AI 原版快照）、`archives/vol-{N}-ch-{M}-{slug}.md`（定稿正文，仅本次 order 章节，Write 生成/覆盖）、`settings/foreshadowing.md`（台账缺失时创建，升级/既有项目兜底）、`settings/character-setting/{id}.md`（新建角色文件——归档 Step 2 正文新角色建档、设定变更场景 A 新增角色；仅本 order 涉及的角色）、`.agent/task/*-order.md`（覆盖 status 为 DONE，不删除） | 不写 `.draft.md`/`.anti-ai.md` 等中间稿、其他章节正文、卷纲、提示词、其他 settings/ 文件（character-setting/{id}.md 新建除外） |
+  | Write | `.agent/status.md`、`.agent/archiving/{chapter}.done`、`.agent/{chapter}-draft-ai.md`（创建 AI 原版快照）、`archives/vol-{N}-ch-{M}-{slug}.md`（定稿正文，仅本次 order 章节，Write 生成/覆盖）、`settings/foreshadowing.md`（台账缺失时创建，升级/既有项目兜底）、`settings/character-setting/{id}.md`（新建角色文件——归档 Step 2 正文新角色建档、设定变更场景 A 新增角色；仅本 order 涉及的角色）、`.agent/task/*-order.md`（覆盖 status 为 DONE，不删除） | 不写 `.draft.md`/`.humanizer.md` 等中间稿、其他章节正文、卷纲、提示词、其他 settings/ 文件（character-setting/{id}.md 新建除外） |
   | Edit | `settings/`、`chapters/`（仅改 status 字段为 archived、移除 `## 设定变更通知` 块）、`volumes/`（仅移除 `## 设定变更通知` 块）、`.claude/memory/`、`.claude/knowledge/` | 不改章纲/卷纲正文内容 |
   | Glob | `settings/`、`archives/`、`chapters/`、`volumes/`、`.claude/memory/` | — |
-- **Permission Level:** 读写 settings/, .claude/memory/, .claude/knowledge/, .agent/；archives/ 中间稿（.draft.md/.anti-ai.md）只读，仅可 Write 本次 order 的定稿 .md
+- **Permission Level:** 读写 settings/, .claude/memory/, .claude/knowledge/, .agent/；archives/ 中间稿（.draft.md/.humanizer.md）只读，仅可 Write 本次 order 的定稿 .md
 
 ## 六、行为规范与约束
 
@@ -201,7 +201,7 @@ knowledge:
   - **所有操作限定在当前工作目录内，不得访问上级或无关路径**
 - **Anti-Patterns:**
   - 不混合两种流程（归档时不改设定结构，设定变更时不走 diff）
-  - 不编辑 `.draft.md`/`.anti-ai.md`；定稿 `.md` 仅复制内容，不改一字
+  - 不编辑 `.draft.md`/`.humanizer.md`；定稿 `.md` 仅复制内容，不改一字
   - 不跳过完成标记步骤
   - 不擅自覆盖冲突性内容
 - **Quality Gates:**

@@ -275,8 +275,8 @@ ______ 不会 ______
 | 来源 | 文件 | 填入字段 |
 |------|------|---------|
 | 基础约束 | genre-example/{genre}.md#prompt_segment | 视角/描写/节奏 |
-| 通用反AI | .claude/knowledge/anti-ai.md（合并文件） | 活人感正向要点（living-voice）+ T1 最毒句式简表 + 元叙事禁止；疲劳词阈值 / T2 / T3 不注入（清创归 anti-ai agent） |
-| 题材反AI | anti-ai/{genre}.md（如存在） | 题材正反例 |
+| 通用反AI | .claude/knowledge/humanizer.md（合并文件） | 活人感正向要点（living-voice）+ T1 最毒句式简表 + 元叙事禁止；疲劳词阈值 / T2 / T3 不注入（清创归 humanizer agent） |
+| 题材反AI | humanizer/{genre}.md（如存在） | 题材正反例 |
 
 **场景写作方法论注入：** 根据场景原材料识别的场景类型（可选值：dialogue / fight / environment / inner-mono / transition / group-scene），从 `.claude/knowledge/scene-craft/` 读取对应文件。**必须经过上下文过滤**——结合本章的角色状态、信息差、情绪走向改写方法论，不能生搬硬套。**每个场景类型只抽取 1-2 条，不要求全部覆盖。**
 
@@ -302,7 +302,7 @@ ______ 不会 ______
 | 案例 | scene-craft 方法论（四步转化） | 角色设定, 信息差关系 |
 | 输入·场景原材料 | 章纲 场景卡（场景三要素+信息差关系） | — |
 | 输出·约束红线 | 章纲 memo, 作者补充, 章纲 冲突阶梯 | — |
-| 输出·写作规范 | genre-example.md, anti-ai.md, .claude/knowledge/scene-craft/ | 场景类型识别结果 |
+| 输出·写作规范 | genre-example.md, humanizer.md, .claude/knowledge/scene-craft/ | 场景类型识别结果 |
 | 输出·质感要求 | 章纲 memo, 作者补充 | writing-style.md |
 
 
