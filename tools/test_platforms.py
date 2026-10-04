@@ -81,27 +81,27 @@ def test_detect():
 def test_rewrite():
     print("[unit] rewrite_refs")
     import platforms as p
-    text = "先 Read `.claude/knowledge/anti-ai.md` 和 `.claude/memory/volume-memory.md`"
+    text = "先 Read `.claude/knowledge/humanizer.md` 和 `.claude/memory/volume-memory.md`"
     out = p.rewrite_refs(text, p.PLATFORMS["reasonix"])
     check("reasonix 改写两处",
-          out == "先 Read `.reasonix/knowledge/anti-ai.md` 和 `.reasonix/memory/volume-memory.md`",
+          out == "先 Read `.reasonix/knowledge/humanizer.md` 和 `.reasonix/memory/volume-memory.md`",
           out)
     check("claude 原样", p.rewrite_refs(text, p.PLATFORMS["claude"]) == text)
     out = p.rewrite_refs(text, p.PLATFORMS["codex"])
     check("codex 改写两处",
-          out == "先 Read `.codex/knowledge/anti-ai.md` 和 `.codex/memory/volume-memory.md`",
+          out == "先 Read `.codex/knowledge/humanizer.md` 和 `.codex/memory/volume-memory.md`",
           out)
     out = p.rewrite_refs(text, p.PLATFORMS["zcode"])
     check("zcode 改写两处",
-          out == "先 Read `.zcode/knowledge/anti-ai.md` 和 `.zcode/memory/volume-memory.md`",
+          out == "先 Read `.zcode/knowledge/humanizer.md` 和 `.zcode/memory/volume-memory.md`",
           out)
     out = p.rewrite_refs(text, p.PLATFORMS["dsh"])
     check("dsh 改写两处",
-          out == "先 Read `.dsh/knowledge/anti-ai.md` 和 `.dsh/memory/volume-memory.md`",
+          out == "先 Read `.dsh/knowledge/humanizer.md` 和 `.dsh/memory/volume-memory.md`",
           out)
     out = p.rewrite_refs(text, p.PLATFORMS["grok"])
     check("grok 改写两处",
-          out == "先 Read `.grok/knowledge/anti-ai.md` 和 `.grok/memory/volume-memory.md`",
+          out == "先 Read `.grok/knowledge/humanizer.md` 和 `.grok/memory/volume-memory.md`",
           out)
 
 
@@ -309,8 +309,8 @@ def test_init_layout():
                 check(f"{key} check-chapter.py 内容与源一致",
                       t2.read_text(encoding="utf-8") ==
                       (TOOLS / "check-chapter.py").read_text(encoding="utf-8"))
-            aa = tmp / f".{key}" / "knowledge" / "anti-ai.md"
-            check(f"{key} anti-ai.md 合并结构热源定律",
+            aa = tmp / f".{key}" / "knowledge" / "humanizer.md"
+            check(f"{key} humanizer.md 合并结构热源定律",
                   aa.exists() and "结构热源定律" in aa.read_text(encoding="utf-8"))
             for sb in ("detect-battles.md", "prose-regressions.txt", "locked-lines.txt"):
                 check(f"{key} 生成 sandbox/{sb}", (tmp / "sandbox" / sb).exists())
@@ -322,7 +322,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "reasonix")
         names = ["novel-agent", "writer", "volume-planner", "chapter-planner",
-                 "prompt-crafter", "anti-ai", "reader", "updater", "style-distiller",
+                 "prompt-crafter", "humanizer", "reader", "updater", "style-distiller",
                  "memory-recording", "roleplay-sandbox"]  # 与 deploy_reasonix_skills 的 11 个 skill 名对应（spec 契约）
         for n in names:
             check(f"reasonix skill {n}", (tmp / ".reasonix/skills" / n / "SKILL.md").exists())
@@ -348,7 +348,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "zcode")
         names = ["novel-agent", "writer", "volume-planner", "chapter-planner",
-                 "prompt-crafter", "anti-ai", "reader", "updater", "style-distiller",
+                 "prompt-crafter", "humanizer", "reader", "updater", "style-distiller",
                  "memory-recording", "roleplay-sandbox"]  # 与 deploy_zcode_skills 的 11 个 skill 名对应（spec 契约）
         for n in names:
             check(f"zcode skill {n}", (tmp / ".zcode/skills" / n / "SKILL.md").exists())
@@ -453,7 +453,7 @@ def test_init_layout():
         tmp = Path(td)
         init_project(tmp, "dsh")
         names = ["novel-agent", "writer", "volume-planner", "chapter-planner",
-                 "prompt-crafter", "anti-ai", "reader", "updater", "style-distiller",
+                 "prompt-crafter", "humanizer", "reader", "updater", "style-distiller",
                  "memory-recording", "roleplay-sandbox"]  # 与 deploy_dsh_skills 的 11 个 skill 名对应（spec 契约）
         for n in names:
             check(f"dsh skill {n}", (tmp / ".dsh/skills" / n / "SKILL.md").exists())
@@ -527,9 +527,9 @@ def test_init_layout():
             f.read_text(encoding="utf-8") for f in sorted((tmp / ".grok/agents").glob("*.md"))
         )
         check("grok 全部 agent 无 .claude 残留", ".claude" not in all_md)
-        aa = (tmp / ".grok/agents/anti-ai.md").read_text(encoding="utf-8")
+        aa = (tmp / ".grok/agents/humanizer.md").read_text(encoding="utf-8")
         aafm = aa.split("---", 2)[1]
-        check("grok anti-ai 保留 shell",
+        check("grok humanizer 保留 shell",
               "run_terminal_command" in aafm, aafm[:300])
         check("grok skill roleplay-sandbox",
               (tmp / ".grok/skills/roleplay-sandbox/SKILL.md").exists())
@@ -554,13 +554,13 @@ def test_short_init_layout():
       另有平台 skills 目录部署 2 个独立工具（short-scan / short-analyze）
     - codex TOML：.codex/agents/*.toml，6 个
     - inline skill（reasonix/zcode/dsh）：.平台/skills/<name>/SKILL.md，6 个（无独立工具）
-    知识产物（short-anti-ai.md + short-craft/ + short-genres/）各平台同构。
+    知识产物（short-humanizer.md + short-craft/ + short-genres/）各平台同构。
     """
     print("[e2e] init.py --length short 布局（全平台）")
     short_names = {"short-agent", "short-planner", "short-writer", "short-editor",
                    "short-verifier", "reader"}
     long_only = {"novel-agent", "volume-planner", "chapter-planner", "prompt-crafter",
-                 "updater", "anti-ai", "style-distiller", "writer"}
+                 "updater", "humanizer", "style-distiller", "writer"}
     for key in ("claude", "opencode", "reasonix", "codex", "zcode", "dsh", "grok"):
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
@@ -592,7 +592,7 @@ def test_short_init_layout():
                 check(f"short {key} 不部署 {a}", a not in names)
             # 知识产物（全平台同构）
             know = root / "knowledge"
-            check(f"short {key} 部署 short-anti-ai.md", (know / "short-anti-ai.md").exists())
+            check(f"short {key} 部署 short-humanizer.md", (know / "short-humanizer.md").exists())
             check(f"short {key} 不合并长篇 anti-ai.md", not (know / "anti-ai.md").exists())
             check(f"short {key} 部署 short-genres/zhuiqi.md",
                   (know / "short-genres" / "zhuiqi.md").exists())
@@ -697,8 +697,8 @@ def test_short_init_layout():
         names = {p.stem for p in agents_dir.glob("*.md")}
         check("long 部署 novel-agent", "novel-agent" in names)
         check("long 不部署 short-agent", "short-agent" not in names)
-        check("long 不产 short-anti-ai.md",
-              not ((tmp / ".claude" / "knowledge" / "short-anti-ai.md")).exists())
+        check("long 不产 short-humanizer.md",
+              not ((tmp / ".claude" / "knowledge" / "short-humanizer.md")).exists())
 
 
 def test_sync():
@@ -717,8 +717,8 @@ def test_sync():
               (r2.stdout + r2.stderr)[-400:])
         # 升级守卫：长篇项目不得被 sync 引入 short/ 篇目目录或短篇知识
         check("claude sync 不产 short/ 篇目目录", not (tmp / "short").exists())
-        check("claude sync 不产 short-anti-ai.md",
-              not (tmp / ".claude/knowledge/short-anti-ai.md").exists())
+        check("claude sync 不产 short-humanizer.md",
+              not (tmp / ".claude/knowledge/short-humanizer.md").exists())
 
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
