@@ -17,7 +17,7 @@ knowledge:
     description: 写作文风
   - path: settings/character-setting/
     description: 角色设定目录
-  - path: .claude/knowledge/anti-ai.md
+  - path: .claude/knowledge/humanizer.md
     description: 反 AI 模式库
   - path: .claude/knowledge/prompt-setting-style.md
     description: 6 元素提示词骨架 + 填充规则 + 质检标准
@@ -77,7 +77,7 @@ knowledge:
   - `chapters/vol-{N}-ch-{M-1}.md` → 上一章 emotional_design（情绪钩子/落点）+ required_changes（结尾画面、情绪残留、读者缺口）；`volumes/vol-{N}.md` → 前章摘要辅助
   - `settings/writing-style.md` → 写作风格四字段（叙事身份/硬约束/AI 易犯错误/描写层次和手法）
   - `settings/character-setting/` → 本章涉及的角色设定（角色初始状态 + 叙事规则关联推导）
-  - `.claude/knowledge/anti-ai.md` → 反 AI 规则
+  - `.claude/knowledge/humanizer.md` → 反 AI 规则
   - `.claude/knowledge/genre-example.md` → 题材提示词注入段（输出·写作规范用；init.py 按题材合并为单一文件）
   - `.agent/cognition/vol-{N}-ch-{M}.md` → 本章认知状态（cognition-agent 产物）：每场景 POV 认知剖面（认知层/注意力/错误信念/解释误差）；缺失则在完成报告标注并要求先跑 cognition-agent
   - 场景 POV 角色的 narrator voice profile（filter-spec 16 字段）→ 组装 POV filter
@@ -104,7 +104,7 @@ knowledge:
     执行全流程：Step 1(读取输入) → Step 2(结构填充+权重+稀疏+四步逻辑) → Step 3(冲突检测) → Step 4(验收自检)
 
   OBSERVE:
-    读什么？← 三(Input Sources): order + chapter.md + .claude/knowledge/anti-ai.md
+    读什么？← 三(Input Sources): order + chapter.md + .claude/knowledge/humanizer.md
     用什么读？← 五(工具): Read → chapters/, .claude/knowledge/
 
   THINK:
