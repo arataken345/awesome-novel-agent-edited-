@@ -38,7 +38,7 @@
 | Bash | 无脚本调用（纯 LLM 提取）；其他命令向 novel-agent 说明 | 不调已退役工具 |
 
 ## 四、防冲突 / 自检
-- banned_words 与 anti-ai 禁用词合并去重。
+- banned_words 与 humanizer 禁用词合并去重。
 - 场景卡 override 不与主卡同维度并列（override 即覆盖）。
 - 自检：frontmatter 过 check-agents 校验（9 维键/枚举/分布和）；备份存在；幂等（重复跑同样本不产生多余备份）。
 - 卡冻结：本技能不做任何更新——机器生成章永不回写卡；重蒸馏仅作者触发。

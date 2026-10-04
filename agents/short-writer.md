@@ -13,7 +13,7 @@ knowledge:
     description: 短篇写作通用底座（动笔前先读）
   - path: .claude/knowledge/short-craft/short-format.md
     description: 短篇正文格式规范（最高优先级，写作前必读）
-  - path: .claude/knowledge/short-anti-ai.md
+  - path: .claude/knowledge/short-humanizer.md
     description: 短篇去AI口径（写时自查 AI 腔，禁用词与所有格规则）
   - path: .claude/knowledge/short-craft/hooks-chapter.md
     description: 章节钩子类型库（节尾留钩设计用）
