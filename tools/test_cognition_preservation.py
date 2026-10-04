@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Cognition-preservation tests: anti-AI stage, reader stage, registry isolation.
+"""Cognition-preservation tests: humanizer stage, reader stage, registry isolation.
 
 Problems 6, 7, 16 (+ the no-humanity-score guard, Problem 12).
 
 Scope (honest limits)
 ---------------------
-The anti-AI rewrite stage (agents/anti-ai.md) and the reader review stage
+The humanizer rewrite stage (agents/humanizer.md) and the reader review stage
 (agents/reader.md) are LLM agents. They CANNOT be executed deterministically.
-This file does NOT simulate an anti-AI rewrite with deterministic logic and
+This file does NOT simulate a humanizer rewrite with deterministic logic and
 does NOT claim to validate a rewrite. What it pins is:
 
 (a) the deterministic machine pre-screen contract
     (tools/check-prose-en.py): cognitively-meaningful prose behaviors must
     not draw a must-fix flag demanding their removal;
-(b) the guard wiring (knowledge/anti-ai/hedge-protection.md exists, is merged
-    into the deployed anti-ai knowledge by tools/init.py, and states that
+(b) the guard wiring (knowledge/humanizer/hedge-protection.md exists, is merged
+    into the deployed humanizer knowledge by tools/init.py, and states that
     hedged perception must never be upgraded to stated fact);
 (c) documented-contract assertions (labeled SPEC-CONTRACT) over
     agents/novel-agent.md and agents/reader.md: reader review is advisory-only
@@ -275,26 +275,26 @@ def test_preservation_pre_screen():
 
 
 def test_hedge_protection_wiring():
-    guard = REPO / "knowledge/anti-ai/hedge-protection.md"
-    check("anti-ai-preservation/guard: hedge-protection.md exists",
+    guard = REPO / "knowledge/humanizer/hedge-protection.md"
+    check("humanizer-preservation/guard: hedge-protection.md exists",
           guard.exists(), str(guard))
     guard_text = guard.read_text(encoding="utf-8") if guard.exists() else ""
     init_text = (TOOLS / "init.py").read_text(encoding="utf-8")
     check(
-        "anti-ai-preservation/wiring: init.py merges hedge-protection.md "
-        "into the deployed anti-ai knowledge",
+        "humanizer-preservation/wiring: init.py merges hedge-protection.md "
+        "into the deployed humanizer knowledge",
         '"hedge-protection.md"' in init_text,
         "filename not found in tools/init.py",
     )
     check(
-        "anti-ai-preservation/guard: hedged perception must never be "
+        "humanizer-preservation/guard: hedged perception must never be "
         "upgraded to stated fact",
         "升级为事实" in guard_text and "事实升级" in guard_text,
         "guard text missing the no-fact-upgrade rule",
     )
     checker_src = (TOOLS / "check-prose-en.py").read_text(encoding="utf-8")
     check(
-        "anti-ai-preservation/checker-contract: hedged perception is "
+        "humanizer-preservation/checker-contract: hedged perception is "
         "deliberately NEVER flagged by check-prose-en",
         "deliberately NEVER" in checker_src and "flagged" in checker_src,
         "contract statement not found in check-prose-en.py",
@@ -334,9 +334,9 @@ def test_rewrite_dispatch_contract():
     novel = (REPO / "agents/novel-agent.md").read_text(encoding="utf-8")
     check(
         "reader-preservation/SPEC-CONTRACT: rewrite dispatch is documented "
-        "from anti-ai FAIL (round<3)",
+        "from humanizer FAIL (round<3)",
         "FAIL 且 round < 3" in novel and "rewrite-order" in novel,
-        "anti-ai FAIL -> rewrite-order dispatch missing",
+        "humanizer FAIL -> rewrite-order dispatch missing",
     )
     review_idx = novel.find("step=reviewing")
     archive_idx = novel.find("step=archiving", review_idx)
