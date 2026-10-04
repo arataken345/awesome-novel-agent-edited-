@@ -27,12 +27,12 @@ novel-agent **只做三件事**：
 | draft | narrator-voice-agent | `narrator-voice-order.md` |
 | draft | prompt-crafter | `prompt-craft-order.md` |
 | draft | writer | `writing-order.md` |
-| anti-ai | anti-ai | `anti-ai-order.md` |
-| anti-ai FAIL | writer | `writing-order.md`（rewrite_of + round + violations） |
+| humanizer | humanizer | `humanizer-order.md` |
+| humanizer FAIL | writer | `writing-order.md`（rewrite_of + round + violations） |
 | review | reader | `reader-review-order.md` |
 | archive | updater | `archive-order.md` |
 | rewrite（归档后重写某章） | updater | `rollback-order.md`（撤销该章归档追加，status 回 outline，重新规划编写） |
-| detect（作者触发可选） | anti-ai | `detect-loop-order.md`（作者说"送检/过一遍外部检测/检测一下"时触发；SOP 见 skills/detect-loop.md；不推进章节状态，不进断点表——支线环节，order DONE 即结束） |
+| detect（作者触发可选） | humanizer | `detect-loop-order.md`（作者说"送检/过一遍外部检测/检测一下"时触发；SOP 见 skills/detect-loop.md；不推进章节状态，不进断点表——支线环节，order DONE 即结束） |
 | finished | 无（终态） | 无——完本退出，不调度 |
 | （卷完成后触发） | updater | `memory-sweep-order.md`（记忆兜底：格式验证/查重/压缩/永久记忆升降级） |
 
@@ -69,7 +69,7 @@ updater 归档 order 标 DONE 后，novel-agent 自己裁决（不写 order、�
 ## 写 order 文件的规则
 
 1. order 文件路径：`.agent/task/{type}-order.md`
-2. order 文件只包含：输入信息/文件路径 + 输出目标路径 + `status: pending`。不包含执行步骤、规则、方法论。rewrite-order（anti-ai FAIL 抽卡重写）只含 rewrite_of/round/violations 路径 + 原始风格提示词路径，不含执行步骤。
+2. order 文件只包含：输入信息/文件路径 + 输出目标路径 + `status: pending`。不包含执行步骤、规则、方法论。rewrite-order（humanizer FAIL 抽卡重写）只含 rewrite_of/round/violations 路径 + 原始风格提示词路径，不含执行步骤。
 3. 子 agent 的 SKILL.md 定义执行 SOP，order 不涉及具体步骤。
 4. 只写 order 文件，调用子 agent 后不碰任何其他文件
 5. 不把多个任务塞进同一个 order
@@ -108,7 +108,7 @@ outputs:
 | narrator-voice-filtering | `章节状态 > narrator-voice-filtering`（`narrator-voice-order` DONE 且每场景 filter 产出） | 成立 → 跳过；否则派 narrator-voice-order（缺失则停下，等产出） |
 | prompt-crafting | `章节状态 > prompt-crafting` | 成立 → 跳过 |
 | writing | `章节状态 > writing` | 成立 → 跳过 |
-| anti-ai | `章节状态 > anti-ai` | 成立 → 跳过 |
+| humanizer | `章节状态 > humanizer` | 成立 → 跳过 |
 | reviewing | `章节状态 > reviewing` | 成立 → 跳过 |
 | archiving | `章节状态 > archiving` 或 `.done` 存在 | 成立 → 跳过 |
 

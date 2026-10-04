@@ -194,7 +194,7 @@ def test_build_filter_never_invents_behavior_fields():
 # ------------------------------------------------- Gate B7: hedge protection
 
 def test_hedge_protection_entry_exists():
-    text = read_repo("knowledge/anti-ai/hedge-protection.md")
+    text = read_repo("knowledge/humanizer/hedge-protection.md")
     check("hedge-protection guard entry exists", "误杀防护" in text)
     check("hedging is epistemic-layer mandated", "epistemic-layers" in text)
     check("never upgrade hedged perception to fact",

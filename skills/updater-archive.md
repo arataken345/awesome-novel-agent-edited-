@@ -8,7 +8,7 @@
 |--------|---------|---------|
 | `.agent/task/archive-order.md` | 存在, 含 vol/chapter 号 | 报错给 novel-agent |
 | `.agent/{chapter}-draft-ai.md` | 存在，或可从 `archives/*.draft.md` 创建 | 缺失 → 复制草稿创建（主路径，见 Step 1 ①） |
-| `archives/vol-{N}-ch-{M}*`（`.md`/`.anti-ai.md`/`.draft.md` 任一） | 存在 | 报缺少正文；定稿 `.md` 由 Step 1 生成 |
+| `archives/vol-{N}-ch-{M}*`（`.md`/`.humanizer.md`/`.draft.md` 任一） | 存在 | 报缺少正文；定稿 `.md` 由 Step 1 生成 |
 | `settings/character-setting/` | 可读写 | 不存在则创建目录 |
 | `settings/timeline.md` | 可读写 | 不存在则创建文件 |
 | `.agent/status.md` | 存在 | 报错给 novel-agent |
@@ -45,14 +45,14 @@
 1. **创建 AI 原版快照（主路径，updater 负责）**：若 `.agent/{chapter}-draft-ai.md` 不存在，从当前草稿
    `archives/vol-{N}-ch-{M}-*.draft.md` 复制一份作为 AI 原版快照（diff 基线）。快照创建必须先于任何
    diff/定稿动作。快照与保留的 `.draft.md` 职责不同：**快照 = 审计基线（此后不改）；`.draft.md` = 历史稿留档（可偏离基线）**
-2. **判定并生成定稿**：只回答"哪个是最终内容"。任何分支都保留 `.draft.md` / `.anti-ai.md`，不删不改：
+2. **判定并生成定稿**：只回答"哪个是最终内容"。任何分支都保留 `.draft.md` / `.humanizer.md`，不删不改：
    - **`.md` 已存在**（此前归档已生成）：
-     - 与 `.draft.md` / `.anti-ai.md` 内容一致 → `.md` 即定稿，跳过（幂等）
+     - 与 `.draft.md` / `.humanizer.md` 内容一致 → `.md` 即定稿，跳过（幂等）
      - 与任一保留稿不一致（作者归档后重写过）→ **STOP**，将差异展示给作者确认：
        用新稿 Write 覆盖 `.md`，或维持旧 `.md`。不自动覆盖
-   - **`.md` 不存在，`.anti-ai.md` 存在** → Write 其内容到定稿：`archives/vol-{N}-ch-{M}-{slug}.md`
+   - **`.md` 不存在，`.humanizer.md` 存在** → Write 其内容到定稿：`archives/vol-{N}-ch-{M}-{slug}.md`
    - **`.md` 不存在，仅 `.draft.md`** → Write 其内容到定稿：`archives/vol-{N}-ch-{M}-{slug}.md`
-   - **正文不存在（`.md`/`.anti-ai.md`/`.draft.md` 均无）** → STOP 报错给 novel-agent
+   - **正文不存在（`.md`/`.humanizer.md`/`.draft.md` 均无）** → STOP 报错给 novel-agent
 3. **复核**：定稿 `.md` 存在且非空；中间稿保留未删。归档后所有正文读取（diff、reader 回看、跨章一致性）
    一律以 `.md` 为权威，其他后缀为中间稿
 4. **标记章纲已归档**：用 Edit 将 `chapters/vol-{N}-ch-{M}.md` 的 `status` 字段从 `outline` 改为 `archived`（只改该字段，不碰章纲正文）。此标记是 Step 10 卷边界检测的判断依据
@@ -173,7 +173,7 @@
 - **修改后字数:** XXXX（增减 ±X%）
 ```
 
-数据来源：读 `.agent/review/vol-{N}-ch-{M}.md`（reader 评审留档）的终局判决与 AI 味维度，或从 anti-ai.md 的 Phase 4 报告提取。如两者都无，则跳过不自行计算。
+数据来源：读 `.agent/review/vol-{N}-ch-{M}.md`（reader 评审留档）的终局判决与 AI 味维度，或从 humanizer.md 的 Phase 4 报告提取。如两者都无，则跳过不自行计算。
 
 ### Step 6.6: 注册表维护（unresolved-registry）
 
@@ -199,7 +199,7 @@
 - **use_count:** 1
 ```
 
-**② 反 AI 修改** → 语义合并到 `.claude/knowledge/anti-ai.md`
+**② 反 AI 修改** → 语义合并到 `.claude/knowledge/humanizer.md`
 - 读取 AI 快照 vs 最终正文，提取修改模式
 - 与已有规则做语义合并：
   - 完全相同 → 跳过
@@ -281,7 +281,7 @@
 ## 四、验收清单
 
 - [ ] 写作反馈已收集（作者确认或从 diff 自动提取）
-- [ ] 定稿 `archives/*.md` 已 Write 生成，中间稿（`.draft.md`/`.anti-ai.md`）保留未删
+- [ ] 定稿 `archives/*.md` 已 Write 生成，中间稿（`.draft.md`/`.humanizer.md`）保留未删
 - [ ] 所有出场角色的状态 + 情绪弧线已更新
 - [ ] 生物/怪物检测已完成 + 作者确认
 - [ ] 持有物/经历已更新（如有变化）

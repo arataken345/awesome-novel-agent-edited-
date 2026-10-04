@@ -196,7 +196,7 @@ prompt-crafter owns assembly, writer owns prose. Cognition modeling
 (building the per-scene knowledge lattice and cognitive profiles) and
 filter assembly (turning profile + state into the 16-field contract) are
 distinct skills with distinct inputs. Where a responsibility already
-existed — the reader's harsh review, anti-ai's machine screening, the
+existed — the reader's harsh review, humanizer's machine screening, the
 updater's archive duties — the command extended rather than duplicated.
 
 ## 21. Why the registries live with the updater

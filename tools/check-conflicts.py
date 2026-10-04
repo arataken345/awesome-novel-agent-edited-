@@ -4,10 +4,10 @@
 扫描 knowledge/ 与 skills/ 下的规则文件，检查两类问题：
 
 A. 阈值冲突：同一对象在不同文件里定义了不同的数量阈值。
-   权威源 = knowledge/anti-ai/common-rules.md。其他文件的阈值若与权威源
+   权威源 = knowledge/humanizer/common-rules.md。其他文件的阈值若与权威源
    同对象但数字不同 → 报冲突（职责声明要求其他文件只引用、不重复定义）。
 
-B. 边界越界：方法论/豁免类文件（anti-ai-writing.md、boundary-cases.md）
+B. 边界越界：方法论/豁免类文件（humanizer-writing.md、boundary-cases.md）
    职责是解释"为什么"和"怎么做"，禁止出现数量线。检出即报越界。
 
 C. 术语/反模式禁现（审计 2026-08-13 §3-C5，决策 P2-10）：
@@ -38,12 +38,12 @@ KNOWLEDGE_DIR = ROOT / "knowledge"
 SKILLS_DIR = ROOT / "skills"
 
 # 唯一权威源——其他文件的阈值以它为准
-AUTHORITY = KNOWLEDGE_DIR / "anti-ai" / "common-rules.md"
+AUTHORITY = KNOWLEDGE_DIR / "humanizer" / "common-rules.md"
 
 # 越界白名单：这些文件职责是方法论/豁免，禁止数量线
 METHODOLOGY_FILES = [
-    "knowledge/anti-ai/anti-ai-writing.md",
-    "knowledge/anti-ai/boundary-cases.md",
+    "knowledge/humanizer/humanizer-writing.md",
+    "knowledge/humanizer/boundary-cases.md",
 ]
 
 # 扫描范围：knowledge/ + skills/ 下所有 .md

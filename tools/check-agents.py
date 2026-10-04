@@ -61,7 +61,7 @@ VALID_TOOLS = {
 # 这些由 init.py 按题材/合并生成，或由 updater 归档时创建
 # （review #47：首项被 `[a-z-]+\.md` 完全包含属冗余，已删）
 DEPLOYED_PATTERNS = [
-    re.compile(r"^\.claude/knowledge/[a-z-]+\.md$"),          # 平铺产物（format-specs/anti-ai/genre-example/permanent-memory）
+    re.compile(r"^\.claude/knowledge/[a-z-]+\.md$"),          # 平铺产物（format-specs/humanizer/genre-example/permanent-memory）
     re.compile(r"^\.claude/knowledge/(plot-craft|scene-craft|character-craft|title-craft|style-distill|cognition|narrator-voice|global-rules)/"),
     re.compile(r"^\.claude/knowledge/(short-craft|short-genres)/"),  # 短篇知识目录（craft/genres 子目录拷贝）
     re.compile(r"^sandbox/(prose-regressions|locked-lines)\.txt$"),  # 项目沙箱资产（长短篇共用约定）
@@ -183,17 +183,17 @@ def _is_deployed(rel: str) -> bool:
 # init.deploy_knowledge 的产物布局 ≠ 仓库 knowledge/ 布局：
 #   format-specs/*.md          → <根>/knowledge/*.md（拍平）
 #   genre-example/{genre}.md   → <根>/knowledge/genre-example.md（合并）
-#   anti-ai 四源 + 题材规则     → <根>/knowledge/anti-ai.md（合并）
+#   humanizer 诸源 + 题材规则    → <根>/knowledge/humanizer.md（合并）
 #   craft 目录 + style-distill/ → <根>/knowledge/<目录>/（原样拷贝）
 # 引用方写的是部署后路径（基座 .claude/knowledge/...，rewrite_refs 按平台重写前缀），
 # 仓库内无源文件 → 只能对照 init.py 逻辑计算产物清单校验。
 
 # 生成类产物：init.py 每次运行必生成（引用它们合法）
-_KNOWLEDGE_GENERATED = {"anti-ai.md", "genre-example.md", "permanent-memory.md"}
+_KNOWLEDGE_GENERATED = {"humanizer.md", "genre-example.md", "permanent-memory.md"}
 
 # 仓库 knowledge/ 中面向作者、不经 agent 消费的参考文件（部署清单豁免，孤儿检测白名单）
 _KNOWLEDGE_AUTHOR_REFS = {
-    "knowledge/anti-ai/fanqie.md",       # 1200+ 行作者学习材料，自述「AI 不主动读取」
+    "knowledge/humanizer/fanqie.md",      # 1200+ 行作者学习材料，自述「AI 不主动读取」
     "knowledge/README.md",               # 知识库自述
     "knowledge/genre-example/index.md",  # 题材注册表（init 选题材的数据源，非部署产物）
     "knowledge/plot-craft/README.md",
@@ -268,11 +268,11 @@ def check_deployed_knowledge_refs() -> list:
             err = _check_knowledge_ref(m.group(1), files, f"{f.name} 正文")
             if err:
                 errors.append(err)
-        for m in re.finditer(r"(?<![.a-zA-Z0-9_/-])knowledge/(format-specs|genre-example|anti-ai)/"
+        for m in re.finditer(r"(?<![.a-zA-Z0-9_/-])knowledge/(format-specs|genre-example|humanizer)/"
                              r"([A-Za-z0-9_./{}-]+)", text):
             errors.append(
                 f"{f.name}: 正文引用仓库相对路径 knowledge/{m.group(1)}/{m.group(2)}，"
-                f"部署后不存在（format-specs 拍平 / genre-example 合并 / anti-ai 合并；"
+                f"部署后不存在（format-specs 拍平 / genre-example 合并 / humanizer 合并；"
                 f"请改写为 .claude/knowledge/ 基座路径）"
             )
 
@@ -284,11 +284,11 @@ def check_deployed_knowledge_refs() -> list:
             if err:
                 errors.append(err)
         # 仓库相对 knowledge/ 引用 = 未按部署后基座写 → 内联后必断链（roleplay-sandbox 类问题）
-        for m in re.finditer(r"(?<![.a-zA-Z0-9_/-])knowledge/(format-specs|genre-example|anti-ai)/"
+        for m in re.finditer(r"(?<![.a-zA-Z0-9_/-])knowledge/(format-specs|genre-example|humanizer)/"
                              r"([A-Za-z0-9_./{}-]+)", text):
             errors.append(
                 f"{f.name}: 正文引用仓库相对路径 knowledge/{m.group(1)}/{m.group(2)}，"
-                f"部署后不存在（format-specs 拍平 / genre-example 合并 / anti-ai 合并；"
+                f"部署后不存在（format-specs 拍平 / genre-example 合并 / humanizer 合并；"
                 f"请改写为 .claude/knowledge/ 基座路径）"
             )
 
@@ -312,7 +312,7 @@ def check_deployed_knowledge_refs() -> list:
             # 项目根的裸 knowledge/ 目录不存在（见 roleplay-sandbox 断链同源问题）
             errors.append(
                 f"{where}: 引用仓库相对路径 knowledge/{ref}，部署后不存在"
-                f"（format-specs 拍平 / genre-example 合并 / anti-ai 合并；"
+                f"（format-specs 拍平 / genre-example 合并 / humanizer 合并；"
                 f"请改写为 .claude/knowledge/ 基座路径）"
             )
     return errors
@@ -347,7 +347,7 @@ def _check_knowledge_ref(base: str, files: set[str], where: str) -> str | None:
     （可带尾 / 表目录级引用、可含 {} 占位符）。"""
     base = base.replace("\\", "/").strip()
     if not base or base in _KNOWLEDGE_GENERATED:
-        return None                     # anti-ai.md / genre-example.md / permanent-memory.md 必生成
+        return None                     # humanizer.md / genre-example.md / permanent-memory.md 必生成
     if base.endswith("/") or "{" in base:
         # 目录级引用（scene-craft/）或占位符（scene-craft/{genre}.md）→ 校验目录存在
         d = base if base.endswith("/") else base.rsplit("/", 1)[0]
@@ -362,7 +362,7 @@ def _check_knowledge_ref(base: str, files: set[str], where: str) -> str | None:
 def check_orphan_knowledge() -> list:
     """被部署进每个项目的 knowledge 文件必须被 agents/skills/SKILL.md 引用。
 
-    产出文件（anti-ai.md 等 3 个生成物）由部署逻辑生成，视为已消费。
+    产出文件（humanizer.md 等 3 个生成物）由部署逻辑生成，视为已消费。
     """
     deployed = _deployed_knowledge_files()
     if deployed is None:

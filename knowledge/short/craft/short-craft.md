@@ -18,7 +18,7 @@
 - 坏例（要删）：一丝悲伤涌上心头。（后面什么都没接）
 - 坏例（要删）：指甲掐进掌心。（哪篇都能套的通用生理反应单写就空）
 
-第一人称所有格清除规则见 `.claude/knowledge/short-anti-ai.md` 第三节。
+第一人称所有格清除规则见 `.claude/knowledge/short-humanizer.md` 第三节。
 
 ## 3. 叙述姿态：在场叙述者
 

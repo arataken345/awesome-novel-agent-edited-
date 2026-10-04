@@ -102,7 +102,7 @@ SHORT_GENRE_LABELS = {
 SHORT_AGENTS = ("short-agent", "short-planner", "short-writer", "short-editor", "short-verifier", "reader")
 
 # 反 AI 规则跨题材复用（对应题材文件头部「适用题材」注释声明，缺同名文件属有意设计）
-_ANTI_AI_REUSE = {
+_HUMANIZER_REUSE = {
     "urban-cultivation": "urban-brained",
     "urban-high-martial": "urban-brained",
 }
@@ -112,7 +112,7 @@ SKILL_HOME = resolve_skill_home()
 SOURCE_AGENTS = SKILL_HOME / "agents"
 SOURCE_KNOWLEDGE = SKILL_HOME / "knowledge"
 SOURCE_TEMPLATES = SKILL_HOME / "templates"
-SOURCE_ANTI_AI = SKILL_HOME / "knowledge" / "anti-ai"
+SOURCE_HUMANIZER = SKILL_HOME / "knowledge" / "humanizer"
 SOURCE_GENRE_EXAMPLE = SKILL_HOME / "knowledge" / "genre-example"
 SOURCE_FORMAT_SPECS = SKILL_HOME / "knowledge" / "format-specs"
 
@@ -243,7 +243,7 @@ def main():
     # Step 4: 按题材继承知识
     deploy_knowledge(project_path, genre, platform, length)
 
-    # Step 4.5: 部署正文检查脚本（anti-ai 机器初筛用，缺省降级为模型肉眼）
+    # Step 4.5: 部署正文检查脚本（humanizer 机器初筛用，缺省降级为模型肉眼）
     deploy_tools(project_path, platform)
 
     if length != "short":
@@ -299,13 +299,13 @@ def main():
 def _genre_gaps(genre: str) -> list:
     """题材支持缺口（知识库文件缺失）→ 缺口标签列表，空 = 完整。
 
-    反 AI 规则允许跨题材复用（见 _ANTI_AI_REUSE 对应文件「适用题材」注释）。
+    humanizer 规则允许跨题材复用（见 _HUMANIZER_REUSE 对应文件「适用题材」注释）。
     选题列表标注与部署警告共用，避免静默选到空壳题材。
     """
     gaps = []
     if not (SOURCE_GENRE_EXAMPLE / f"{genre}.md").exists():
         gaps.append("题材档案待补")
-    if genre not in _ANTI_AI_REUSE and not (SOURCE_ANTI_AI / f"{genre}.md").exists():
+    if genre not in _HUMANIZER_REUSE and not (SOURCE_HUMANIZER / f"{genre}.md").exists():
         gaps.append("反AI规则待补")
     return gaps
 
@@ -462,11 +462,11 @@ def deploy_agents(project_path: Path, platform: Platform, length=None):
 
 
 def deploy_tools(project_path: Path, platform: Platform):
-    """部署正文检查脚本到 <平台>/tools/（anti-ai 机器初筛与章节交付检查用，缺省降级为模型肉眼）"""
+    """部署正文检查脚本到 <平台>/tools/（humanizer 机器初筛与章节交付检查用，缺省降级为模型肉眼）"""
     dst_dir = project_path / platform.root / "tools"
     dst_dir.mkdir(parents=True, exist_ok=True)
     for name, missing_hint in (
-        ("check-prose.py", "anti-ai 机器初筛将降级为模型肉眼"),
+        ("check-prose.py", "humanizer 机器初筛将降级为模型肉眼"),
         ("check-chapter.py", "章节交付硬伤检查不可用"),
         ("check-prose-en.py", "英文正文全局规则硬校验不可用"),
         ("prose_global_rules.py", "正文检查器共享规则模块缺失，检查器将降级提示重跑 init/sync"),
@@ -480,21 +480,21 @@ def deploy_tools(project_path: Path, platform: Platform):
 
 
 def deploy_knowledge(project_path: Path, genre: str, platform: Platform, length=None):
-    """按题材拷贝参考材料 + 反 AI/文风规则到 <平台>/knowledge/。short 长度走短篇知识库分支。"""
+    """按题材拷贝参考材料 + humanizer/文风规则到 <平台>/knowledge/。short 长度走短篇知识库分支。"""
     knowledge_dir = platform.knowledge_dir(project_path)
     count = 0
 
     if length == "short":
         # 短篇：短篇知识库独立部署，不与长篇反 AI 产物合并
         src_root = SKILL_HOME / "knowledge" / "short"
-        anti_ai_src = src_root / "anti-ai" / "short-deslop.md"
-        if anti_ai_src.exists():
+        humanizer_src = src_root / "humanizer" / "short-deslop.md"
+        if humanizer_src.exists():
             # 直接以源文件内容落盘（源自带 H1 标题），与 sync._sync_short_knowledge 布局一致
-            shutil.copy2(anti_ai_src, knowledge_dir / "short-anti-ai.md")
+            shutil.copy2(humanizer_src, knowledge_dir / "short-humanizer.md")
             count += 1
-            print("  ✅ 已部署短篇反 AI 口径（short-anti-ai.md）")
+            print("  ✅ 已部署短篇 humanizer 口径（short-humanizer.md）")
         else:
-            print("  ⚠️  缺 knowledge/short/anti-ai/short-deslop.md——短篇去 AI 口径缺失")
+            print("  ⚠️  缺 knowledge/short/humanizer/short-deslop.md——短篇去 AI 口径缺失")
         for sub in ("craft", "genres"):
             src = src_root / sub
             if src.exists() and src.is_dir():
@@ -521,42 +521,42 @@ def deploy_knowledge(project_path: Path, genre: str, platform: Platform, length=
         print(f"  ⚠️  缺题材档案 knowledge/genre-example/{genre}.md——"
               f"不生成 genre-example.md，settings 保留占位（请在设定阶段与作者补全）")
 
-    # 反 AI 规则：正向方法 + 通用 + 题材 + 方法论 + 误杀防护 + 结构热源 +  hedge 保护（合并为单个 anti-ai.md）
-    # 注：living-voice / common-rules / anti-ai-writing / boundary-cases / structural-heat / hedge-protection
-    #     是 anti-ai agent 的必需输入，统一合并进 .claude/knowledge/anti-ai.md，
+    # humanizer 规则：26 模式体系 + 正向方法 + 通用 + 题材 + 误杀防护 + 结构热源 + hedge 保护（合并为单个 humanizer.md）
+    # 注：living-voice / common-rules / humanizer-writing / boundary-cases / structural-heat / hedge-protection
+    #     是 humanizer agent 的必需输入，统一合并进 .claude/knowledge/humanizer.md，
     #     避免部署后多个失效路径。
     #     living-voice 排最前：正向方法论（先讲写成什么样）置顶，禁用表随后；
     #     hedge-protection 排最后：误杀防护守卫，禁止编辑遍把对冲感知升级为事实陈述。
-    anti_ai_content = []
-    anti_ai_content.append("# 反 AI 规则\n\n[community-defaults]\n")
-    for fname in ("living-voice.md", "common-rules.md", "anti-ai-writing.md",
+    humanizer_content = []
+    humanizer_content.append("# humanizer 规则\n\n[community-defaults]\n")
+    for fname in ("living-voice.md", "common-rules.md", "humanizer-writing.md",
                   "boundary-cases.md", "structural-heat.md", "hedge-protection.md"):
-        f = SOURCE_ANTI_AI / fname
+        f = SOURCE_HUMANIZER / fname
         if f.exists():
-            anti_ai_content.append(f"\n---\n\n{f.read_text(encoding='utf-8')}")
+            humanizer_content.append(f"\n---\n\n{f.read_text(encoding='utf-8')}")
 
-    genre_rules = SOURCE_ANTI_AI / f"{genre}.md"
+    genre_rules = SOURCE_HUMANIZER / f"{genre}.md"
     if genre_rules.exists():
-        anti_ai_content.append(f"\n---\n\n[community-defaults] 题材: {genre}\n")
-        anti_ai_content.append(genre_rules.read_text(encoding="utf-8"))
-    elif genre in _ANTI_AI_REUSE:
-        reuse = _ANTI_AI_REUSE[genre]
-        anti_ai_content.append(
+        humanizer_content.append(f"\n---\n\n[community-defaults] 题材: {genre}\n")
+        humanizer_content.append(genre_rules.read_text(encoding="utf-8"))
+    elif genre in _HUMANIZER_REUSE:
+        reuse = _HUMANIZER_REUSE[genre]
+        humanizer_content.append(
             f"\n---\n\n[community-defaults] 题材: {genre}（复用 {reuse}.md 规则）\n"
         )
-        anti_ai_content.append(
-            (SOURCE_ANTI_AI / f"{reuse}.md").read_text(encoding="utf-8")
+        humanizer_content.append(
+            (SOURCE_HUMANIZER / f"{reuse}.md").read_text(encoding="utf-8")
         )
     else:
-        print(f"  ⚠️  缺题材反 AI 规则 knowledge/anti-ai/{genre}.md——仅继承通用规则"
-              f"（选到该题材时反 AI 检测无题材正反例）")
+        print(f"  ⚠️  缺题材 humanizer 规则 knowledge/humanizer/{genre}.md——仅继承通用规则"
+              f"（选到该题材时 humanizer 检测无题材正反例）")
 
-    if anti_ai_content:
-        (knowledge_dir / "anti-ai.md").write_text(
-            "\n".join(anti_ai_content), encoding="utf-8"
+    if humanizer_content:
+        (knowledge_dir / "humanizer.md").write_text(
+            "\n".join(humanizer_content), encoding="utf-8"
         )
         count += 1
-        print(f"  ✅ 已继承反 AI 规则 (通用 + {genre})")
+        print(f"  ✅ 已继承 humanizer 规则 (通用 + {genre})")
 
     # 永久记忆占位文件（空，后续由 updater 晋升填充）
     permanent_memory = knowledge_dir / "permanent-memory.md"
@@ -818,8 +818,8 @@ def write_status(project_path: Path):
 
 - **skill_version:** 4.28.0
 - **phase:** setup
-- **current_step:** setting        # volume-planning / chapter-planning / prompt-crafting / writing / anti-ai / reviewing / archiving
-# phase 取值：setup / outline / draft / anti-ai / review / archive / finished
+- **current_step:** setting        # volume-planning / chapter-planning / prompt-crafting / writing / humanizer / reviewing / archiving
+# phase 取值：setup / outline / draft / humanizer / review / archive / finished
 # last_volume_completed 与 phase: finished 由 novel-agent 写（卷完成判定），updater 不写完成位
 - **current_volume:**
 - **current_chapter:**

@@ -8,7 +8,7 @@
 |------|------|
 | `living-voice.md` | 活人感正向方法论（活人感三层次/人物场景工艺/防表演化，移植自 human-writing，所有题材共用） |
 | `common-rules.md` | 分级禁用词表、句式模板、替换策略（所有题材共用） |
-| `anti-ai-writing.md` | 去 AI 味完整指南（指纹识别/系统性修改/范例库） |
+| `humanizer-writing.md` | 去 AI 味完整指南（指纹识别/系统性修改/范例库） |
 | `urban.md` | 都市通用 |
 | `urban-romance.md` | 都市言情 |
 | `urban-daily.md` | 都市日常 |
@@ -37,14 +37,14 @@ anti-ai agent 执行去 AI 味时：
     ↓
 读取 common-rules.md（分级禁用表）
     ↓
-读取 anti-ai-writing.md（方法论指南）
+读取 humanizer-writing.md（方法论指南）
     ↓
 读取 {genre}.md（题材正反例）
     ↓
-按 Phase 1-4 管线执行替换
+按 标记→初筛→起草→检查→定稿 管线执行
 ```
 
-### anti-ai Phase 3
+### humanizer Step 3（起草）
 按题材查对应正反例做精确替换
 
 ### prompt-crafter
@@ -60,9 +60,9 @@ anti-ai agent 执行去 AI 味时：
 - **替换策略速查** — 情绪外化/对话标签/视角控制
 - **疲劳词阈值** — 原始阈值速查
 
-### anti-ai-writing.md — 方法论指南
+### humanizer-writing.md — 方法论指南
 
-anti-ai 各 Phase 的方法论基础。包含：
+humanizer 各步骤的方法论基础。包含：
 - **AI 写作指纹** — 高频词/章末总结/叠加描写/均匀分布
 - **Show Don't Tell** — 核心公式 + 五感检查
 - **7 种 AI 写作模式检测** — 每种的信号/特征/修复
@@ -105,7 +105,7 @@ anti-ai 各 Phase 的方法论基础。包含：
 
 ### 方式1：新建题材文件
 
-1. 在 `knowledge/anti-ai/` 下新建 `{genre-id}.md`
+1. 在 `knowledge/humanizer/` 下新建 `{genre-id}.md`
 2. 复制以下模板并填写：
 
 ```markdown

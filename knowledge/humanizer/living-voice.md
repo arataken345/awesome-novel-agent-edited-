@@ -1,6 +1,6 @@
 # 活人感写作方法（正向）
 
-> **职责声明：** 本文件是 anti-ai 的正向方法论——先讲"写成什么样"，写完后的清创以 common-rules.md 分级禁用表为准。本文件不定义阈值与档位；句式识别口径（含翻案腔变形外衣）见 common-rules.md T1 节。
+> **职责声明：** 本文件是 humanizer 的正向方法论——先讲"写成什么样"，写完后的清创以 common-rules.md 分级禁用表为准。本文件不定义阈值与档位；句式识别口径（含翻案腔变形外衣）见 common-rules.md T1 节。
 >
 > 移植自 human-writing skill（MIT License, Copyright (c) 2026 Human Writing Skill contributors），按网文流水线转译。
 

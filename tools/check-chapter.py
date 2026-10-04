@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """章节交付确定性检查。只报警，不自动改文。
 
-与 check-prose.py 分工：check-prose 管 AI 味统计形态（anti-ai Phase 2/4），
+与 check-prose.py 分工：check-prose 管 AI 味统计形态（humanizer Step 2 机器初筛），
 本工具管章节交付硬伤（引语夹层、嵌套引号、半角引号、字数对账、回归串）。
-标点口径对齐 knowledge/anti-ai/common-rules.md：破折号/省略号不做硬禁，
+标点口径对齐 knowledge/humanizer/common-rules.md：破折号/省略号不做硬禁，
 段落内 ≥3 处时提示逐处按用法判定。
 
 项目级资产外置（缺失即跳过，向上最多找 5 层目录）：
@@ -75,7 +75,7 @@ QA_DENSITY = re.compile(r"(?:我|他|她|他们|她们)" + SPEECH_VERB)
 QA_DENSITY_LIMIT = 3
 # 尾随标签窄集（代词+言说动词收尾；人物名表属书级资产，不入通用工具）
 TRAILING_TAG = re.compile(r"”[^”\n]{0,12}(?:我|他|她|他们|她们)" + SPEECH_VERB + r"。")
-# 弱化副词密度：千字占比超标提示（阈值 3/千字，与 anti-ai 规则口径一致）
+# 弱化副词密度：千字占比超标提示（阈值 3/千字，与 humanizer 规则口径一致）
 WEAK_ADVERB = re.compile(r"缓缓|微微|轻轻|淡淡")
 WEAK_ADVERB_PER_KILO = 3
 

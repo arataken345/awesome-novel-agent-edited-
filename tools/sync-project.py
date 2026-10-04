@@ -284,11 +284,11 @@ def find_changes(project: Path, platform: Platform, is_short=False) -> list[str]
         src_root = SKILL_HOME / "knowledge" / "short"
         know = platform.knowledge_dir(project)
         if src_root.exists() and know.exists():
-            anti = know / "short-anti-ai.md"
-            anti_src = src_root / "anti-ai" / "short-deslop.md"
+            anti = know / "short-humanizer.md"
+            anti_src = src_root / "humanizer" / "short-deslop.md"
             if anti_src.exists() and (not anti.exists()
                                       or anti.read_text(encoding="utf-8") != anti_src.read_text(encoding="utf-8")):
-                changed.append("knowledge/short-anti-ai.md")
+                changed.append("knowledge/short-humanizer.md")
             for sub, dst_name in (("craft", "short-craft"), ("genres", "short-genres")):
                 s = src_root / sub
                 d = know / dst_name
@@ -488,13 +488,13 @@ def _sync_short_knowledge(project_path: Path, platform: Platform, target) -> int
         print("  [!] knowledge/short 源目录不存在，跳过")
         return 0
     count = 0
-    anti_ai_src = src_root / "anti-ai" / "short-deslop.md"
+    anti_ai_src = src_root / "humanizer" / "short-deslop.md"
     if anti_ai_src.exists():
-        dst = target / "short-anti-ai.md"
+        dst = target / "short-humanizer.md"
         content = anti_ai_src.read_text(encoding="utf-8")
         if not dst.exists() or dst.read_text(encoding="utf-8") != content:
             dst.write_text(content, encoding="utf-8")
-            print(f"  [+] short-anti-ai.md")
+            print(f"  [+] short-humanizer.md")
         count += 1
     for sub, dst_name in (("craft", "short-craft"), ("genres", "short-genres")):
         src = src_root / sub
@@ -512,7 +512,7 @@ def sync_knowledge(project_path: Path, platform: Platform, is_short=False) -> in
     target = platform.knowledge_dir(project_path)
     target.mkdir(parents=True, exist_ok=True)
     if is_short:
-        # 短篇项目：short/ 源 → short-anti-ai.md + short-craft/ + short-genres/（与 init.deploy_knowledge 一致）
+        # 短篇项目：short/ 源 → short-humanizer.md + short-craft/ + short-genres/（与 init.deploy_knowledge 一致）
         return _sync_short_knowledge(project_path, platform, target)
     if not KNOWLEDGE_DIR.exists():
         print("  [!] knowledge 源目录不存在，跳过")
@@ -545,7 +545,7 @@ def sync_knowledge(project_path: Path, platform: Platform, is_short=False) -> in
 
 
 def sync_tools(project_path: Path, platform: Platform) -> int:
-    """同步正文检查脚本到 <平台>/tools/（源缺失则跳过，anti-ai 降级为模型肉眼）"""
+    """同步正文检查脚本到 <平台>/tools/（源缺失则跳过，humanizer 降级为模型肉眼）"""
     count = 0
     for name in ("check-prose.py", "check-chapter.py", "check-prose-en.py",
                  "prose_global_rules.py"):

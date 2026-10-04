@@ -71,13 +71,13 @@ def test_reroll_contract():
           "写作风格方法论" not in writer_t and "depiction_techniques" not in writer_t
           and "possible_mistakes" not in writer_t)
 
-def test_anti_ai_verify():
-    skill = (REPO / "skills/anti-ai.md").read_text(encoding="utf-8")
-    check("anti-ai 含指令遵循验收", "指令遵循" in skill, "缺指令遵循字样")
-    check("anti-ai 含案例 2 验收", "案例 2" in skill, "缺案例 2 字样")
-    check("anti-ai 引用 verify-checklist", "verify-checklist" in skill, "缺 verify-checklist 引用")   # review #49 拆弱断言
-    check("anti-ai 无 distill-style.py", "distill-style.py" not in skill)
-    check("anti-ai 无 gate-g-checklist", "gate-g-checklist" not in skill)
+def test_humanizer_verify():
+    skill = (REPO / "skills/humanizer.md").read_text(encoding="utf-8")
+    check("humanizer 含风格验收", "风格验收" in skill, "缺风格验收字样")
+    check("humanizer 含 PASS/FAIL 结论", "PASS/FAIL" in skill, "缺 PASS/FAIL 字样")
+    check("humanizer 引用 verify-checklist", "verify-checklist" in skill, "缺 verify-checklist 引用")   # review #49 拆弱断言
+    check("humanizer 无 distill-style.py", "distill-style.py" not in skill)
+    check("humanizer 含 26 模式", "§1" in skill and "§26" in skill, "缺 26 模式体系")
 
 def test_dual_mode():
     import tempfile, yaml
@@ -258,7 +258,7 @@ def test_verify_doc_code_alignment():
 
 def run_all():
     test_feature_extract(); test_schema_templates(); test_retire_clean()
-    test_reroll_contract(); test_anti_ai_verify(); test_dual_mode(); test_unit_convergence()
+    test_reroll_contract(); test_humanizer_verify(); test_dual_mode(); test_unit_convergence()
     test_scalar_percent_validation(); test_inherits_cycle_detected()
     test_project_cards_skips_analysis()
     test_verify_doc_code_alignment()

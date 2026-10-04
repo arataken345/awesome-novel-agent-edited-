@@ -11,7 +11,7 @@ skills:
   - path: skills/short-verify.md
     description: 兑现度核对 SOP（契约硬规则/子事件/情绪/反转/道具/失常/人物一致/对话功能/字数/标点）
 knowledge:
-  - path: .claude/knowledge/short-anti-ai.md
+  - path: .claude/knowledge/short-humanizer.md
     description: 短篇去AI口径（核对的判据来源之一）
   - path: .claude/knowledge/author-communication.md
     description: 作者沟通用语规范（报告用语约束）

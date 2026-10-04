@@ -59,4 +59,4 @@ Observed style becoming stronger than an explicit instruction is a bug.
 - Project: `settings/global-rules.md` (template shipped in
   `templates/settings/`; user-editable; deployed by `init.py`).
 - The `prompt-crafter` injects applicable rules into the writing prompt;
-  `anti-ai` enforces deterministic ones; `reader` audits style fidelity.
+  `humanizer` enforces deterministic ones; `reader` audits style fidelity.

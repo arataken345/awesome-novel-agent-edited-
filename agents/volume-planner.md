@@ -23,7 +23,7 @@ knowledge:
     description: 世界观设定
   - path: settings/genre-setting.md
     description: 题材设定
-  - path: .claude/knowledge/anti-ai.md
+  - path: .claude/knowledge/humanizer.md
     description: 反 AI 模式库（避免套路化叙事）
   - path: .claude/knowledge/story-arc-style.md
     description: 从结局倒推法

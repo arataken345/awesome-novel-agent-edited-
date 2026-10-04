@@ -8,7 +8,7 @@
 - pick_best         超限取最优：违反最少一轮，同分取最新
 - format_report     违反报告表格渲染（条号/原文要求/正文表现/违反与否/建议 + 结论行）
 
-anti-ai 按此口径输出违反报告（格式见 verify-checklist.md）；本模块是确定性测试编码。
+humanizer 按此口径输出违反报告（格式见 verify-checklist.md）；本模块是确定性测试编码。
 
 用法: python tools/style_verify.py < violations.json
 返回码 0 = 成功（结论 PASS/FAIL 见报告末行）。

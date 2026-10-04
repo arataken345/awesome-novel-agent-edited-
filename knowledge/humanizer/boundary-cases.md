@@ -80,7 +80,7 @@
 
 ## 五、写作实操指引
 
-### anti-ai agent 执行规则
+### humanizer agent 执行规则
 
 ```
 检查命中 → 是否在 boundary-cases 列表中？ → 是 → 跳过（标注 SKIP）

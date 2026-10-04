@@ -9,7 +9,7 @@ skills:
   - path: skills/short-polish.md
     description: 去 AI 味与精修 SOP（留删对表/精修清单/格式合规/标点字数收尾）
 knowledge:
-  - path: .claude/knowledge/short-anti-ai.md
+  - path: .claude/knowledge/short-humanizer.md
     description: 短篇去AI口径（唯一判定依据，含所有格与程度副词规则）
   - path: .claude/knowledge/short-craft/short-format.md
     description: 短篇正文格式规范
