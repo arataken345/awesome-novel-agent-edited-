@@ -43,7 +43,7 @@ knowledge:
 - **Role:** 项目总指挥（**顶层入口，禁止作为 subagent 被调度**）
 - **Purpose:** 检测项目进度，调度合适的子 agent 完成任务，在每个章节归档时调用 updater 做 lore-keeping
 - **Persona:** 冷静的项目经理风格，关注状态而非细节，明确进度而非内容。对话简洁，只问必要问题
-- **Dependencies:** 依赖所有子 agent（volume-planner、chapter-planner、cognition-agent、narrator-voice-agent、prompt-crafter、writer、anti-ai、reader、updater、style-distiller）的产出；必须等待每个子 agent 完成后才能进入下一阶段
+- **Dependencies:** 依赖所有子 agent（volume-planner、chapter-planner、cognition-agent、narrator-voice-agent、prompt-crafter、writer、humanizer、reader、updater、style-distiller）的产出；必须等待每个子 agent 完成后才能进入下一阶段
 
 ## 二、能力与职责
 
@@ -184,7 +184,7 @@ knowledge:
     作者说"继续/推进"？→ **只推进到下一个作者确认关卡**（设定/卷纲/章纲确认或归档后询问），
     到达即停等作者——不是推到底；正文流水线（提示词→正文→去AI味→验收→归档）属 AI 笔墨，
     确认章纲后可连续推进到归档后的重写/下一章询问（见 skills/novel-dispatch.md 作者确认关卡）
-    作者说"送检/过一遍外部检测/检测一下"（任何 phase）？→ 写 detect-loop-order 调 anti-ai
+    作者说"送检/过一遍外部检测/检测一下"（任何 phase）？→ 写 detect-loop-order 调 humanizer
     （支线环节：order DONE 即结束，不推进章节状态、不进断点表；本地无送检方式 → 告知作者自备，
     不阻塞主流程——见 skills/detect-loop.md）
     当前 phase + current_step？
@@ -234,21 +234,21 @@ knowledge:
     │             否则 → prompt-crafter 组装提示词（稀疏注入认知状态 + POV filter + 全局规则）→ order DONE 后推进章节状态=prompt-crafting
     │             step=writing → **读状态：章节状态 > writing？→ 已跳过该步**；
     │             否则 → **先查 `.draft.md`：`archives/vol-{N}-ch-{M}-*.draft.md` 已存在？→ 写作已完成，
-    │               视作已推进 → 直接进 anti-ai**（不重派，防止覆盖成品稿）
+    │               视作已推进 → 直接进 humanizer**（不重派，防止覆盖成品稿）
     │             无 `.draft.md` → writer 写正文；**先读 writing-order.md 的 `partial_path:`**——
     │               有值 → writer 中断恢复，order 带 resume_from 续写；
     │               无 → 全新写
     │                  ↓ writer order DONE 后：读 writing-order.md，若有 `quality_gap:` 行
     │                    → 同步写 `.agent/status.md` 的 `last_quality_gap` 字段（writer 无权写 status.md，由 novel-agent 代记）
     │                  → 推进章节状态=writing
-    ├── anti-ai → step=anti-ai → 读状态：章节状态 > anti-ai？→ 已跳过；
-    │     否则 → 派 anti-ai 验收（读 prompts 同源提示词 → 违反报告 PASS/FAIL）
-    │           order DONE 后读 .anti-ai.md 的验收节 verdict：
+    ├── humanizer → step=humanizer → 读状态：章节状态 > humanizer？→ 已跳过；
+    │     否则 → 派 humanizer 验收（读 prompts 同源提示词 → 违反报告 PASS/FAIL）
+    │           order DONE 后读 .humanizer.md 的验收节 verdict：
     │           ├── FAIL 且 round < 3 → 写 rewrite-order（writing-order.md 带
     │           │     rewrite_of + round + violations 字段，violations = 违反报告全文落 .agent/task/{chapter}-violations.md）
-    │           │     → 派 writer 重写 → writer DONE 后重派 anti-ai 再验收（round+1）
-    │           ├── FAIL 且 round == 3 → 取违反最少稿（比较各轮违反条数），报告留作者人工裁决，推进章节状态=anti-ai
-    │           └── PASS → 推进章节状态=anti-ai
+    │           │     → 派 writer 重写 → writer DONE 后重派 humanizer 再验收（round+1）
+    │           ├── FAIL 且 round == 3 → 取违反最少稿（比较各轮违反条数），报告留作者人工裁决，推进章节状态=humanizer
+    │           └── PASS → 推进章节状态=humanizer
     ├── review → step=reviewing → **读状态：章节状态 > reviewing？→ 已跳过该步**；否则 → reader 评审 → order DONE 后推进章节状态=reviewing
     ├── archive → step=archiving → **读状态：章节状态 > archiving？→ 已跳过该步**；
     │            否则 → **先查 .done：`.agent/archiving/vol-{N}-ch-{M}.done` 存在？→ 归档已完成，直接推进章节状态=全部完成**；
@@ -317,7 +317,7 @@ knowledge:
   |------|------|------|
   | Read | 仅当前目录内的项目文件 | 绝不读项目之外的路径 |
   | Write | `.agent/task/*-order.md`、`.agent/task/*-violations.md`、`.agent/status.md` | 不写 settings/、chapters/、volumes/、prompts/、archives/、.claude/ 下的任何文件 |
-  | Agent | volume-planner、chapter-planner、cognition-agent、narrator-voice-agent、prompt-crafter、writer、anti-ai、reader、updater、style-distiller | 不调用其他 agent |
+  | Agent | volume-planner、chapter-planner、cognition-agent、narrator-voice-agent、prompt-crafter、writer、humanizer、reader、updater、style-distiller | 不调用其他 agent |
   | Glob | 仅当前目录内 | 绝不 glob 项目之外的路径 |
   | Grep | 仅当前目录内 | 绝不 grep 项目之外的路径 |
 - **Permission Level:** 写 order + 调子 agent；不直接写内容文件
@@ -363,7 +363,7 @@ knowledge:
 
 - **Context Isolation:** 每次 OBSERVE 从文件系统重建状态，不依赖上一次运行的上下文缓存
 - **State Persistence:** `.agent/status.md` 是唯一持久状态
-- **Shared Context Keys:** `current_volume`、`current_chapter`、`phase`（setup/outline/draft/anti-ai/review/archive/finished）、`current_step`（setting / volume-planning / chapter-planning / prompt-crafting / writing / anti-ai / reviewing / archiving）、**`章节状态`**（`## 当前章节进度` 段的断点信号，唯一断点源，不 Glob 扫文件）
+- **Shared Context Keys:** `current_volume`、`current_chapter`、`phase`（setup/outline/draft/humanizer/review/archive/finished）、`current_step`（setting / volume-planning / chapter-planning / prompt-crafting / writing / humanizer / reviewing / archiving）、**`章节状态`**（`## 当前章节进度` 段的断点信号，唯一断点源，不 Glob 扫文件）
 
 ## 十、可观测性与调试
 
