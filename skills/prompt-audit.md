@@ -169,7 +169,7 @@
 
 ### 维度 H：规则去重（硬门禁）
 
-**目的：** 确保 prompt 里同一语义只出现一次，没有从多源（writing-style / anti-ai / scene-craft / genre-example）带进来的重复规则。这是"组装后去重检查"（prompt-crafting.md Step 2）的核验——组装流程要求了，但需要独立视角确认做到了没有。
+**目的：** 确保 prompt 里同一语义只出现一次，没有从多源（writing-style / humanizer / scene-craft / genre-example）带进来的重复规则。这是"组装后去重检查"（prompt-crafting.md Step 2）的核验——组装流程要求了，但需要独立视角确认做到了没有。
 
 **步骤：**
 1. 通读 prompt 全文，提取所有带约束性质的规则（数量线、禁止项、阈值、硬性要求）
