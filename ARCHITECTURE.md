@@ -17,7 +17,7 @@
 - **VERIFY**：检查产出文件存在、order 文件 `status` 是否为 `DONE`
 - **LOOP**：回到 OBSERVE，直到当前阶段完成
 
-**路由依据是 `.agent/status.md#phase`**（setup/outline/draft/anti-ai/review/archive/finished），不是 `chapter.md#status`。`chapter.md#status`（outline→draft→archived）只表示章节自身的生命周期，不影响 agent 调度路由。
+**路由依据是 `.agent/status.md#phase`**（setup/outline/draft/humanizer/review/archive/finished），不是 `chapter.md#status`。`chapter.md#status`（outline→draft→archived）只表示章节自身的生命周期，不影响 agent 调度路由。
 
 卷完成判定与完本终态：updater 归档后**只输出卷完成报告**，不写完成位；`last_volume_completed` 与 `phase: finished` 由 **novel-agent 裁决写入**（比对已归档章数 vs 卷规划章数）。phase=finished 为终态，不再调度。
 
@@ -41,7 +41,7 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
 | 角色 | 职责 |
 |-----|------|
 | **novel-agent** | 顶层总指挥（`@novel-agent` 加载进主 AI）。检测 phase、写 order 文件、通过 Agent 工具调度子 agent。**不直接代劳子 agent 的工作，不用 Bash，不写任何内容文件** |
-| **子 Agent × 8** | volume-planner / chapter-planner / prompt-crafter / writer / anti-ai / reader / updater / style-distiller。各自负责一个环节，由 novel-agent 调度，完成后将 order 标记 `status: DONE` |
+| **子 Agent × 8** | volume-planner / chapter-planner / prompt-crafter / writer / humanizer / reader / updater / style-distiller。各自负责一个环节，由 novel-agent 调度，完成后将 order 标记 `status: DONE` |
 
 > **写作基底规范**（`knowledge/format-specs/writing-base.md`，部署为 `.claude/knowledge/writing-base.md`，非 agent，不可调度）——永久加载、不可篡改。
 > writer 的写作 sub-agent 动笔前先加载此基底，再叠加章节提示词；与基底冲突时以基底为准。
@@ -54,7 +54,7 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
 | `chapter-planner` | 章纲生成（memo + 情绪设计 + 场景卡 + hooks） | novel-agent |
 | `prompt-crafter` | 6 元素提示词组装（冲突优先级 + 四步转化 + 稀疏注入） | novel-agent |
 | `writer` | 正文生成 + AI 味自检（写作 sub-agent 先经 writing-base 基底） | novel-agent |
-| `anti-ai` | Gate A-F 管线检测 + 量化评分定级 + 逐项清除 | novel-agent |
+| `humanizer` | Gate A-F 管线检测 + 量化评分定级 + 逐项清除 | novel-agent |
 | `reader` | 深度评审（可选，作者需要时调度） | novel-agent |
 | `updater` | 归档 lore-keeping + 设定变更 + 记忆兜底 | novel-agent |
 | `style-distiller` | 风格蒸馏（LLM 双态：脚本统计引擎已退役 → 蒸馏主卡/场景卡/版本快照） | novel-agent |
@@ -76,8 +76,8 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
   │     ├── outline → chapter-planner  （chapter-plan-order.md）
   │     ├── draft   → prompt-crafter   （prompt-craft-order.md）
   │     ├── draft   → writer           （writing-order.md）
-  │     ├── anti-ai → anti-ai          （anti-ai-order.md）
-  │     ├── anti-ai FAIL → writer      （writing-order.md，rewrite_of + round + violations，round<3）
+  │     ├── humanizer → humanizer      （humanizer-order.md）
+  │     ├── humanizer FAIL → writer    （writing-order.md，rewrite_of + round + violations，round<3）
   │     ├── review  → reader           （reader-review-order.md，可选）
   │     ├── archive → updater          （archive-order.md）
   │     ├── 归档后重写某章 → updater    （rollback-order.md，撤销该章归档，status 回 outline）
@@ -110,16 +110,16 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
 [draft]  chapter.md → prompt-crafting（6 元素组装）→ prompts/vol-{N}-ch-{M}-prompt.md
   │        → writer（写作 sub-agent 先读 writing-base 基底 + prompt）→ archives/*.draft.md
   │
-[anti-ai] draft → Phase 1-4 管线 → archives/*.anti-ai.md
+[humanizer] draft → Phase 1-4 管线 → archives/*.humanizer.md
   │
 [review] reader 深度评审（可选）
   │
 [archive] updater 归档（**幂等**，见 §1.5 关键规则）：
   │        先建快照 `.agent/{chapter}-draft-ai.md`（从 .draft.md 复制，审计基线）→ 查 `.agent/archiving/{chapter}.done`，存在则只补缺失项
-  │        判定定稿并 Write 生成 archives/*.md（中间稿 .draft.md/.anti-ai.md 保留不删）
+  │        判定定稿并 Write 生成 archives/*.md（中间稿 .draft.md/.humanizer.md 保留不删）
   │        chapter.md#status → archived
   │        character-setting 追加角色状态（按 `## vol-N-ch-M` 锚点查重）→ timeline 追加事件（查重）
-  │        快照 vs 定稿 diff → 语义合并到 .claude/knowledge/anti-ai.md + 动态记忆（writing-memory.md）（查重）
+  │        快照 vs 定稿 diff → 语义合并到 .claude/knowledge/humanizer.md + 动态记忆（writing-memory.md）（查重）
   │        写 {chapter}.done → 推进 status.md → order 标记 DONE
 ```
 
@@ -151,7 +151,7 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
 ├── novel-samples/        # 文风蒸馏样本（作者把待学文风的文章放这里，style-distiller 专用）
 ├── archives/
 │   ├── *.draft.md        # 草稿（writer 输出，历史留档）
-│   ├── *.anti-ai.md      # 去 AI 味后版本（历史留档）
+│   ├── *.humanizer.md    # 去 AI 味后版本（历史留档）
 │   └── *.md              # 定稿（updater 归档时 Write 生成；归档后正文读取一律以此为准，中间稿不删）
 ├── .agent/
 │   ├── status.md         # ★ phase 路由依据（唯一持久状态）
@@ -172,7 +172,7 @@ Skill 入口（主 agent 加载 SKILL.md 后）先做项目状态检测，之后
 
 ```
 agents/          # Agent 定义（frontmatter: role / react / skills / knowledge）
-skills/          # 子 agent 的 SOP（anti-ai、prompt-crafting、memory-recording、volume-arc 等）
+skills/          # 子 agent 的 SOP（humanizer、prompt-crafting、memory-recording、volume-arc 等）
 knowledge/       # 静态参考知识 → 部署到项目 .claude/knowledge/
 templates/       # 项目骨架模板（settings/volumes/chapters/migration/…）
 tools/           # init.py（初始化）、sync-project.py（同步更新）
@@ -188,7 +188,7 @@ tools/           # init.py（初始化）、sync-project.py（同步更新）
 | `plot-craft/` | 剧情设计方法论（冲突升级/钩子/反转/悲剧） | **作者决策** |
 | `character-craft/` | 角色设定方法论（认知 6 层模型/反派模板） | **作者决策** |
 | `title-craft/` | 取书名方法论 | **作者决策** |
-| `anti-ai/` | 反 AI 规则（common-rules / boundary-cases / {genre} 正反例） | **AI 自动** |
+| `humanizer/` | 反 AI 规则（common-rules / boundary-cases / {genre} 正反例） | **AI 自动** |
 
 **场景方法论目录**：`scene-craft/{类型}/universal.md` + `{题材}.md` 特化，含 `prose/`、`pov/`（始终加载，稀疏注入）与 `dialogue/`、`fight/`、`appearance/`、`inner-mono/`、`death-scene/`、`environment/`、`group-scene/`、`transition/`（按场景类型触发）。
 
@@ -209,7 +209,7 @@ tools/           # init.py（初始化）、sync-project.py（同步更新）
 ### 5.1 流程
 
 ```
-Step 1  读取输入源（writing-style / volume / chapter / 涉及角色设定 / genre-example / anti-ai 规则）
+Step 1  读取输入源（writing-style / volume / chapter / 涉及角色设定 / genre-example / humanizer 规则）
 Step 1.5 加载全局冲突裁定优先级（裁决后续规则冲突，不产出到 prompt 文本）
 Step 2  按 6 元素结构填充：角色 / 任务指示 / 背景信息 / 案例 / 输入 / 输出
 Step 3  冲突检测（前后一致性核对）
@@ -293,13 +293,13 @@ Step 4  验收自检 → 写入 prompts/vol-{N}-ch-{M}-prompt.md
 3. 场景重叠 → 扩展已有条目场景范围
 4. 冲突 → 询问作家确认
 
-结果写入 `.claude/knowledge/anti-ai.md` 和写作记忆（`.claude/memory/writing-memory.md`），标注 `[writer-preference]`。
+结果写入 `.claude/knowledge/humanizer.md` 和写作记忆（`.claude/memory/writing-memory.md`），标注 `[writer-preference]`。
 
 ---
 
-## 7. 去 AI 味管线（anti-ai）
+## 7. 去 AI 味管线（humanizer）
 
-anti-ai 是独立子 agent，输入 `archives/*.draft.md`，输出 `archives/*.anti-ai.md`。**不改剧情，只改表达。**
+humanizer 是独立子 agent，输入 `archives/*.draft.md`，输出 `archives/*.humanizer.md`。**不改剧情，只改表达。**
 
 ```
 Phase 1  扫描   按 Gate A-F 分类标记 AI 味位置
@@ -309,9 +309,9 @@ Phase 3  清除   按定级范围逐 Gate 修改，多轮收敛（同段连续�
 Phase 4  报告   字数变化 + 修改统计 + 前后对比 + 机器复跑核验
 ```
 
-- **误杀防护**：修改前读 `knowledge/anti-ai/boundary-cases.md` 做豁免判定，命中则跳过标 `[SKIP: 误杀防护]`
+- **误杀防护**：修改前读 `knowledge/humanizer/boundary-cases.md` 做豁免判定，命中则跳过标 `[SKIP: 误杀防护]`
 - **删除量上限**：轻 ≤15% / 中 ≤25% / 重 ≤35%
-- **白名单**：同级目录存在 `.anti-ai-whitelist` 时，其中段落跳过所有 Gate
+- **白名单**：同级目录存在 `.humanizer-whitelist` 时，其中段落跳过所有 Gate
 
 ---
 
@@ -333,12 +333,12 @@ Phase 4  报告   字数变化 + 修改统计 + 前后对比 + 机器复跑核�
 1. 作家在 `.claude/memory/` 积累自己的模式
 2. 说"贡献这个模式"
 3. 生成 community-ready 格式
-4. 提 PR 到 `knowledge/anti-ai/`
+4. 提 PR 到 `knowledge/humanizer/`
 
 ### 新增题材类型
 
 1. 在 `knowledge/genre-example/` 添加题材填充案例
-2. 在 `knowledge/anti-ai/` 添加反 AI 默认模式
+2. 在 `knowledge/humanizer/` 添加反 AI 默认模式
 3. 添加 `scene-craft/{类型}/{题材}.md` 题材特化方法论
 
 ---
@@ -348,7 +348,7 @@ Phase 4  报告   字数变化 + 修改统计 + 前后对比 + 机器复跑核�
 - **`.agent/status.md#phase`** — agent 调度路由依据，唯一持久状态
 - **`chapters/*.md#status`** — 章节生命周期 `outline → draft → archived`
 - **order 文件** — `.agent/task/*-order.md`，子 agent 完成后覆盖 `status: pending → DONE`（不删除），novel-agent 以 `status: DONE` 确认完成
-- **`archives/*.md`** — 正文唯一存放处；`.draft.md` = 草稿；`.anti-ai.md` = 去 AI 味后；归档后定稿一律读 `.md`，`.draft.md`/`.anti-ai.md` 为历史留档（不删）
+- **`archives/*.md`** — 正文唯一存放处；`.draft.md` = 草稿；`.humanizer.md` = 去 AI 味后；归档后定稿一律读 `.md`，`.draft.md`/`.humanizer.md` 为历史留档（不删）
 - **`.agent/{chapter}-draft-ai.md`** — AI 原版快照，归档 diff 基线；归档后保留（审计留档，靠 `.agent/archiving/{chapter}.done` 标记区分过期）
 - **`.agent/archiving/{chapter}.done`** — 归档完成 checkpoint，重派时从断点继续，防 append 重放重复
 - **`.claude/memory/*.md`** — 追加写入，不覆盖
